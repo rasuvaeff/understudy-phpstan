@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rasuvaeff\Understudy\PhpStan\Tests\Internal;
 
 use Rasuvaeff\Understudy\PhpStan\Internal\VerbNames;
+use Rasuvaeff\Understudy\Understudy;
 use Testo\Assert;
 use Testo\Codecov\Covers;
 use Testo\Data\DataProvider;
@@ -52,10 +53,10 @@ final class VerbNamesTest
 
     public static function staticProvider(): iterable
     {
-        yield 'the static form' => [\Rasuvaeff\Understudy\Understudy::class, 'when', true];
-        yield 'leading separator' => [\Rasuvaeff\Understudy\Understudy::class, 'expect', true];
+        yield 'the static form' => [Understudy::class, 'when', true];
+        yield 'leading separator' => [Understudy::class, 'expect', true];
         yield 'lowercased' => ['rasuvaeff\understudy\understudy', 'verify', true];
-        yield 'our class, not a verb' => [\Rasuvaeff\Understudy\Understudy::class, 'for', false];
+        yield 'our class, not a verb' => [Understudy::class, 'for', false];
         yield 'a verb on somebody else' => ['App\Testing\Doubles', 'when', false];
         yield 'a namesake class elsewhere' => ['App\Understudy', 'when', false];
     }

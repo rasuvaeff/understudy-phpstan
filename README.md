@@ -145,6 +145,16 @@ by a real PHPStan process as part of `composer build` — including a control
 run with the extension switched off, which is what tells a working extension
 apart from one that loads and does nothing.
 
+## The understudy family
+
+| Package | What it is |
+|---|---|
+| [rasuvaeff/understudy](https://github.com/rasuvaeff/understudy) | The engine: doubles, matchers, expectations, verification. |
+| [rasuvaeff/understudy-testo](https://github.com/rasuvaeff/understudy-testo) | Testo adapter — verification and reset around every test. |
+| [rasuvaeff/understudy-phpunit](https://github.com/rasuvaeff/understudy-phpunit) | PHPUnit and Pest adapter — the same, through a trait. |
+| [rasuvaeff/understudy-psalm](https://github.com/rasuvaeff/understudy-psalm) | Psalm plugin — matcher-aware specifications and misuse diagnostics. |
+| **rasuvaeff/understudy-phpstan** *(this package)* | PHPStan extension — the same for PHPStan, plus its own rules. |
+
 ## Development
 
 ```bash

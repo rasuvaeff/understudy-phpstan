@@ -146,6 +146,16 @@ $repository->find(Arg::int());  // не спецификация: матчер �
 контрольный прогон с выключенным расширением: именно он отличает работающее
 расширение от того, которое загрузилось и ничего не делает.
 
+## Семейство understudy
+
+| Пакет | Что это |
+|---|---|
+| [rasuvaeff/understudy](https://github.com/rasuvaeff/understudy) | Движок: дубли, матчеры, ожидания, верификация. |
+| [rasuvaeff/understudy-testo](https://github.com/rasuvaeff/understudy-testo) | Testo-адаптер — верификация и сброс вокруг каждого теста. |
+| [rasuvaeff/understudy-phpunit](https://github.com/rasuvaeff/understudy-phpunit) | Адаптер для PHPUnit и Pest — то же самое, через трейт. |
+| [rasuvaeff/understudy-psalm](https://github.com/rasuvaeff/understudy-psalm) | Psalm-плагин — спецификации с матчерами и диагностики ошибок. |
+| **rasuvaeff/understudy-phpstan** *(этот пакет)* | PHPStan-расширение — то же самое для PHPStan, плюс свои правила. |
+
 ## Разработка
 
 ```bash
