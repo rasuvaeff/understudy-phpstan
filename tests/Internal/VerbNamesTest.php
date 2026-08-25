@@ -57,7 +57,10 @@ final class VerbNamesTest
     public static function staticProvider(): iterable
     {
         yield 'the static form' => [Understudy::class, 'when', true];
-        yield 'leading separator' => ['\\Rasuvaeff\\Understudy\\Understudy', 'expect', true];
+        // Built rather than written out: a literal FQCN string is what
+        // rector rewrites into `::class`, and `::class` has no leading
+        // separator — which is the whole point of this case.
+        yield 'leading separator' => ['\\' . Understudy::class, 'expect', true];
         yield 'lowercased' => ['rasuvaeff\understudy\understudy', 'verify', true];
         yield 'our class, not a verb' => [Understudy::class, 'for', false];
         yield 'a verb on somebody else' => ['App\Testing\Doubles', 'when', false];
