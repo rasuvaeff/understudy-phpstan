@@ -1,0 +1,217 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Rasuvaeff\Understudy\PhpStan\Tests\Integration;
+
+use Testo\Assert;
+use Testo\Codecov\CoversNothing;
+use Testo\Test;
+
+/**
+ * The whole extension, driven as a real PHPStan process over fixture
+ * projects.
+ *
+ * A unit test can prove that a rule returns an error for a node it is handed.
+ * It cannot prove that PHPStan hands it that node, that the neon file
+ * registers it, that a collector's data arrives keyed the way the rule reads
+ * it, or that a matcher stops being a type error — those live in the seam
+ * with the analyser, and the only way to observe a seam is to run it.
+ *
+ * The control run — same files, same level, no extension — is what tells a
+ * working extension apart from one that loads and does nothing.
+ *
+ * @internal
+ */
+#[Test]
+#[CoversNothing]
+final class ExtensionIntegrationTest
+{
+    public function withoutTheExtensionEveryMatcherIsAnError(): void
+    {
+        // The premise. If PHPStan has nothing to say about matchers at this
+        // level even without the extension, the test below proves nothing.
+        $report = $this->analyse('Matchers', 'phpstan-without-extension.neon');
+
+        Assert::same($this->countIn($report, 'Correct.php'), 5);
+    }
+
+    public function withTheExtensionAMatcherFitsWhateverTheContractDeclares(): void
+    {
+        $report = $this->analyse('Matchers');
+
+        Assert::same($this->countIn($report, 'Correct.php'), 0);
+    }
+
+    public function nothingAroundTheMatcherIsSilenced(): void
+    {
+        $report = $this->analyse('Matchers');
+        $messages = $this->messagesIn($report, 'Wrong.php');
+
+        // A wrong argument beside a matcher, and a method the contract does
+        // not have: both are PHPStan's own reports, and both survive typing
+        // the matcher as `never`. This is the difference between a type that
+        // fits and a suppressed diagnostic.
+        Assert::same(
+            count(array_filter(
+                $messages,
+                static fn(array $m): bool => str_contains($m['message'], 'expects int, string given'),
+            )),
+            1,
+        );
+        Assert::same(
+            count(array_filter(
+                $messages,
+                static fn(array $m): bool => str_contains($m['message'], 'undefined method'),
+            )),
+            1,
+        );
+    }
+
+    public function aMatcherOfTheWrongKindAndOneOutsideASpecificationAreReported(): void
+    {
+        $identifiers = $this->identifiersIn($this->analyse('Matchers'), 'Wrong.php');
+
+        Assert::true(\in_array('understudy.matcher', $identifiers, strict: true));
+        Assert::true(\in_array('understudy.matcherLeak', $identifiers, strict: true));
+    }
+
+    public function everyMisuseIsReportedAndNothingElseIs(): void
+    {
+        $report = $this->analyse('Misuse');
+
+        // Nine mistakes, nine reports, all of them ours.
+        Assert::same($this->countIn($report, 'Wrong.php'), 9);
+        Assert::same(
+            array_values(array_unique(array_map(
+                static fn(string $identifier): string => explode('.', $identifier)[0],
+                $this->identifiersIn($report, 'Wrong.php'),
+            ))),
+            ['understudy'],
+        );
+
+        // And the control group: each of these is the nearest correct
+        // neighbour of a mistake next door. A false accusation here is worse
+        // than a missed one, because a user cannot act on it.
+        Assert::same($this->countIn($report, 'Right.php'), 0);
+    }
+
+    /**
+     * The rules answer a question about the specification, not about types,
+     * so they have to answer it at the level PHPStan users actually run.
+     * Level 9 is where the matcher typing matters; level 0 is where most
+     * projects live, and a rule that only fired at 9 would be missing for
+     * them.
+     */
+    public function theMisuseRulesFireAtTheLowestLevelToo(): void
+    {
+        $report = $this->analyse('Misuse', 'phpstan-level-0.neon');
+
+        Assert::same($this->countIn($report, 'Wrong.php'), 9);
+        Assert::same($this->countIn($report, 'Right.php'), 0);
+    }
+
+    public function anAnswerOfTheWrongShapeIsReported(): void
+    {
+        $report = $this->analyse('Returns');
+
+        // Four of the five are not our own rules at all: filling in the
+        // builder's template parameter is all the extension does there, and
+        // PHPStan checks `returns()` and `answers()` against it on its own.
+        // The fifth is the one the parameter cannot carry — a void method,
+        // whose `WhenBuilder<void>` nobody could satisfy.
+        Assert::same($this->countIn($report, 'Wrong.php'), 5);
+        Assert::same(
+            array_count_values($this->identifiersIn($report, 'Wrong.php')),
+            ['argument.type' => 4, 'understudy.returns' => 1],
+        );
+
+        // Answers that fit, and the shapes the extension declines to judge.
+        Assert::same($this->countIn($report, 'Right.php'), 0);
+    }
+
+    public function theWireShapeIsReadFromTheConstructor(): void
+    {
+        $report = $this->analyse('Wire');
+        $identifiers = $this->identifiersIn($report, 'Wrong.php');
+
+        // A key the constructor has no parameter for, and a method the
+        // contract behind a key does not have.
+        Assert::true(\in_array('offsetAccess.notFound', $identifiers, strict: true));
+        Assert::true(\in_array('method.notFound', $identifiers, strict: true));
+        Assert::same($this->countIn($report, 'Right.php'), 0);
+    }
+
+    /**
+     * @return array<string, list<array{message: string, line: int|null, identifier?: string|null}>>
+     */
+    private function analyse(string $fixture, string $config = 'phpstan.neon'): array
+    {
+        $root = \dirname(__DIR__, 2);
+        $project = __DIR__ . '/Fixtures/' . $fixture;
+
+        $command = sprintf(
+            '%s %s analyse --configuration=%s --error-format=json --no-progress --autoload-file=%s 2>/dev/null',
+            escapeshellarg(PHP_BINARY),
+            escapeshellarg($root . '/vendor/bin/phpstan'),
+            escapeshellarg($project . '/' . $config),
+            escapeshellarg($root . '/vendor/autoload.php'),
+        );
+
+        exec($command, $lines);
+
+        $decoded = json_decode(implode("\n", $lines), associative: true);
+
+        if (!\is_array($decoded) || !isset($decoded['files']) || !\is_array($decoded['files'])) {
+            return [];
+        }
+
+        $report = [];
+
+        /** @var array<string, array{messages?: list<array{message: string, line: int|null, identifier?: string|null}>}> $files */
+        $files = $decoded['files'];
+
+        foreach ($files as $file => $data) {
+            $report[$file] = array_values($data['messages'] ?? []);
+        }
+
+        return $report;
+    }
+
+    /**
+     * @param array<string, list<array{message: string, line: int|null, identifier?: string|null}>> $report
+     *
+     * @return list<array{message: string, line: int|null, identifier?: string|null}>
+     */
+    private function messagesIn(array $report, string $file): array
+    {
+        foreach ($report as $path => $messages) {
+            if (str_ends_with($path, $file)) {
+                return $messages;
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * @param array<string, list<array{message: string, line: int|null, identifier?: string|null}>> $report
+     */
+    private function countIn(array $report, string $file): int
+    {
+        return \count($this->messagesIn($report, $file));
+    }
+
+    /**
+     * @param array<string, list<array{message: string, line: int|null, identifier?: string|null}>> $report
+     *
+     * @return list<string>
+     */
+    private function identifiersIn(array $report, string $file): array
+    {
+        return array_values(array_map(
+            static fn(array $message): string => $message['identifier'] ?? '',
+            $this->messagesIn($report, $file),
+        ));
+    }
+}

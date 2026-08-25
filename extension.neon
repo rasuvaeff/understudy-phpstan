@@ -1,0 +1,35 @@
+rules:
+    - Rasuvaeff\Understudy\PhpStan\Rule\SpecificationCallRule
+    - Rasuvaeff\Understudy\PhpStan\Rule\SpecificationStaticCallRule
+    - Rasuvaeff\Understudy\PhpStan\Rule\FluentCardinalityRule
+    - Rasuvaeff\Understudy\PhpStan\Rule\VoidReturnsRule
+    - Rasuvaeff\Understudy\PhpStan\Rule\MatcherLeakRule
+
+services:
+    -
+        class: Rasuvaeff\Understudy\PhpStan\Internal\WireShape
+
+    -
+        class: Rasuvaeff\Understudy\PhpStan\ArgReturnType
+        tags:
+            - phpstan.broker.dynamicStaticMethodReturnTypeExtension
+
+    -
+        class: Rasuvaeff\Understudy\PhpStan\BuilderReturnType
+        tags:
+            - phpstan.broker.dynamicFunctionReturnTypeExtension
+
+    -
+        class: Rasuvaeff\Understudy\PhpStan\StaticBuilderReturnType
+        tags:
+            - phpstan.broker.dynamicStaticMethodReturnTypeExtension
+
+    -
+        class: Rasuvaeff\Understudy\PhpStan\Collector\SpecificationRangeCollector
+        tags:
+            - phpstan.collector
+
+    -
+        class: Rasuvaeff\Understudy\PhpStan\Collector\MatcherCallCollector
+        tags:
+            - phpstan.collector

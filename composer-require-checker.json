@@ -1,0 +1,43 @@
+{
+    "symbol-whitelist": [
+        "PHPStan\\Analyser\\Scope",
+        "PHPStan\\Collectors\\Collector",
+        "PHPStan\\Node\\CollectedDataNode",
+        "PHPStan\\Reflection\\ExtendedMethodReflection",
+        "PHPStan\\Reflection\\FunctionReflection",
+        "PHPStan\\Reflection\\MethodReflection",
+        "PHPStan\\Reflection\\ParametersAcceptor",
+        "PHPStan\\Reflection\\ParametersAcceptorSelector",
+        "PHPStan\\Reflection\\ReflectionProvider",
+        "PHPStan\\Rules\\IdentifierRuleError",
+        "PHPStan\\Rules\\Rule",
+        "PHPStan\\Rules\\RuleErrorBuilder",
+        "PHPStan\\Type\\BooleanType",
+        "PHPStan\\Type\\Constant\\ConstantArrayTypeBuilder",
+        "PHPStan\\Type\\Constant\\ConstantStringType",
+        "PHPStan\\Type\\DynamicFunctionReturnTypeExtension",
+        "PHPStan\\Type\\DynamicStaticMethodReturnTypeExtension",
+        "PHPStan\\Type\\FloatType",
+        "PHPStan\\Type\\Generic\\GenericObjectType",
+        "PHPStan\\Type\\IntegerType",
+        "PHPStan\\Type\\MixedType",
+        "PHPStan\\Type\\NeverType",
+        "PHPStan\\Type\\ObjectType",
+        "PHPStan\\Type\\StringType",
+        "PHPStan\\Type\\Type",
+        "PHPStan\\Type\\VerbosityLevel",
+        "PHPStan\\Type\\VoidType"
+    ],
+    "php-core-extensions": [
+        "Core",
+        "date",
+        "json",
+        "hash",
+        "pcre",
+        "Phar",
+        "Reflection",
+        "SPL",
+        "standard"
+    ],
+    "scan-files": []
+}

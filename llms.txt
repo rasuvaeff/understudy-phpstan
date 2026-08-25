@@ -1,0 +1,69 @@
+# rasuvaeff/understudy-phpstan
+
+PHPStan extension for `rasuvaeff/understudy`.
+
+## Install
+
+```bash
+composer require --dev rasuvaeff/understudy-phpstan
+```
+
+With `phpstan/extension-installer` that is all. Without it:
+
+```neon
+includes:
+    - vendor/rasuvaeff/understudy-phpstan/extension.neon
+```
+
+Namespace: `Rasuvaeff\Understudy\PhpStan`. Requires PHP 8.3 - 8.5 and
+`phpstan/phpstan ^2.1`.
+
+## API
+
+There is none. The extension's whole surface is `extension.neon` and the
+error identifiers below — every class it registers is `@internal`, and a
+project never names one.
+
+## Rules
+
+- A matcher is typed `never`, the bottom type every parameter accepts. That
+  is why `Arg::int()` may stand in for a declared `int` at level 9+ — and why
+  NOTHING is suppressed: a wrong argument beside the matcher, an undefined
+  method on the double, and the statements around the closure all keep their
+  reports.
+- The matcher's own kind is NOT encoded in that type on purpose. Typing
+  `Arg::string()` as `string` would make a `non-empty-string` parameter an
+  error, and a matcher can match a non-empty string. Impossible pairings are
+  reported by a rule instead, which asks whether ANY value of the kind fits
+  and stays silent on "maybe".
+- `when()` / `expect()` get the builder type they really produce, so
+  `returns()` and `answers()` are checked against the method being specified
+  rather than against `mixed`. Left alone when the method returns `void`,
+  `never` or `mixed`: `WhenBuilder<void>` is a claim nobody can satisfy.
+- `Understudy::wire(Sut::class)` gets the shape read off the constructor. A
+  dynamic class-string is left alone.
+- Both spellings are understood: the free functions a test file imports and
+  the `Understudy::` static form Pest users reach for, plus the readers that
+  have no function spelling — `calls()`, `lastCall()`, `verifySequence()`.
+- No baseline, no ignored errors of our own. Rules stay silent whenever they
+  are not sure.
+
+## Identifiers
+
+- `understudy.closure` — the closure specifies nothing, makes more than one
+  call, or calls a static method a double cannot intercept.
+- `understudy.cardinality` — `times(5, 2)`, a negative bound,
+  `verify(…, never: true, times: 3)`, `times` beside a `minimum`.
+- `understudy.matcher` — a matcher whose kind the parameter can never accept.
+- `understudy.returns` — `returns()` on a method declared `void`.
+- `understudy.matcherLeak` — a matcher written outside a specification, where
+  it reaches the code as a value. This one exists BECAUSE matchers are typed
+  `never`: without it the extension would be weaker than no extension for
+  that mistake.
+
+Silence one with `ignoreErrors: - identifier: understudy.matcherLeak`.
+
+## Levels
+
+- Level 9+: the matcher typing is what makes specifications analysable at all.
+- Any level, including 0: the rules, the builder type and the `wire()` shape.
