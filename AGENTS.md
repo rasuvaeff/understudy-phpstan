@@ -89,6 +89,12 @@ make release-check
   inside PHPStan. A unit test that builds an `ObjectType` and expects a
   message will die on it — that pairing belongs in a fixture project, and
   `MatcherKindTest` says so where the case would have gone.
+- **The `phpstan/phpstan` constraint is `^2.2.2`, and that is what can be
+  proved.** `rector/rector` requires `^2.2.2` itself, so nothing in this
+  package's dev graph — `composer build`, `Prefer lowest`, the integration
+  suite — can ever install 2.1.x. A wider constraint would be a promise no
+  gate here exercises. Widening it later is a minor; narrowing it would be a
+  major, so it starts where the evidence is.
 - **`composer-require-checker` cannot see inside the phar either.** Every
   `PHPStan\*` symbol is listed in `composer-require-checker.json`, not
   because the dependency is missing — `phpstan/phpstan` is in `require` — but
