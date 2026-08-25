@@ -64,5 +64,11 @@ final class SpecificationExprTest
         yield 'our class, not a verb' => ['\Rasuvaeff\Understudy\Understudy::for(\App\Gate::class);', null];
         yield 'not a call at all' => ['$specification;', null];
         yield 'a method call' => ['$builder->times(1);', null];
+        // Each guard alone: a class that is an expression rather than a name,
+        // a method name computed at run time, and a function name that is not
+        // a name either.
+        yield 'a dynamic class' => ['$class::when(fn () => 1);', null];
+        yield 'a dynamic method' => ['\Rasuvaeff\Understudy\Understudy::{$verb}(fn () => 1);', null];
+        yield 'a dynamic function' => ['$verb(fn () => 1);', null];
     }
 }

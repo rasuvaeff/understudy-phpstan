@@ -35,7 +35,9 @@ final class MatcherName
             return null;
         }
 
-        if (strtolower(ltrim(ResolvedName::of($expression->class), '\\')) !== strtolower(Arg::class)) {
+        // No `ltrim()` of a leading separator: a resolved `Name` never
+        // carries one, whichever way the class was written.
+        if (strtolower(ResolvedName::of($expression->class)) !== strtolower(Arg::class)) {
             return null;
         }
 

@@ -89,13 +89,18 @@ final class MatcherKindTest
         yield 'float into int' => ['float', new IntegerType(), true];
     }
 
+    /**
+     * Asserted whole rather than by fragments: a message is what a user acts
+     * on, and every half of a concatenation in one is a mutant a
+     * `contains()` cannot see.
+     */
     public function theComplaintNamesBothSides(): void
     {
-        $problem = MatcherKind::problem('int', new StringType()) ?? '';
-
-        Assert::string($problem)->contains('Arg::int()');
-        Assert::string($problem)->contains('int');
-        Assert::string($problem)->contains('string');
+        Assert::same(
+            MatcherKind::problem('int', new StringType()),
+            '`Arg::int()` matches a value of type int, and this parameter accepts string. '
+            . 'No argument can satisfy both, so the specification can never match.',
+        );
     }
 
     /**

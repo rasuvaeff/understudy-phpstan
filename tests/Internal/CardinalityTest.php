@@ -65,10 +65,50 @@ final class CardinalityTest
         yield 'swapped bounds' => [['minimum' => 5, 'maximum' => 2], true];
     }
 
-    public function namesTheArgumentThatContradictsNever(): void
+    /**
+     * The complaints are asserted whole, not by a fragment they contain: a
+     * message is what a user acts on, and every half of a concatenation in
+     * one is a mutant a `contains()` cannot see.
+     */
+    #[DataProvider('messageProvider')]
+    public function saysExactlyWhatIsWrong(array $arguments, string $expected): void
     {
-        $problem = Cardinality::verifyProblem(['never' => true, 'maximum' => 2]);
+        Assert::same(Cardinality::verifyProblem($arguments), $expected);
+    }
 
-        Assert::string($problem ?? '')->contains('maximum');
+    public static function messageProvider(): iterable
+    {
+        yield 'never and an exact count' => [
+            ['never' => true, 'times' => 3],
+            '`never: true` says the call never happened, and `times` says how often it did. '
+            . 'Keep the one you mean.',
+        ];
+        yield 'never and a maximum' => [
+            ['never' => true, 'maximum' => 2],
+            '`never: true` says the call never happened, and `maximum` says how often it did. '
+            . 'Keep the one you mean.',
+        ];
+        yield 'an exact count and a bound' => [
+            ['times' => 3, 'minimum' => 1],
+            '`times` is an exact count, so a `minimum` or `maximum` beside it has nothing left '
+            . 'to constrain. Use one or the other.',
+        ];
+        yield 'swapped bounds' => [
+            ['minimum' => 5, 'maximum' => 2],
+            'no run satisfies at least 5 calls and at most 2. Did the bounds get swapped?',
+        ];
+    }
+
+    #[DataProvider('boundsMessageProvider')]
+    public function saysExactlyWhichBoundIsImpossible(?int $minimum, ?int $maximum, string $expected): void
+    {
+        Assert::same(Cardinality::timesProblem($minimum, $maximum), $expected);
+    }
+
+    public static function boundsMessageProvider(): iterable
+    {
+        yield 'negative minimum' => [-1, null, 'a call cannot happen -1 times: the minimum is negative.'];
+        yield 'negative maximum' => [null, -2, 'a call cannot happen -2 times: the maximum is negative.'];
+        yield 'swapped bounds' => [5, 2, 'no run satisfies at least 5 calls and at most 2. Did the bounds get swapped?'];
     }
 }

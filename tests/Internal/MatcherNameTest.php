@@ -47,5 +47,10 @@ final class MatcherNameTest
         yield 'a class whose name ends in Arg' => ['\App\MyArg::int();', null];
         yield 'a method call, not a static one' => ['$arg->int();', null];
         yield 'not a call at all' => ['$argument;', null];
+        // Each guard alone: a class that is an expression rather than a name,
+        // and a method name computed at run time. Either one is enough to
+        // make this somebody else's call.
+        yield 'a dynamic class' => ['$class::int();', null];
+        yield 'a dynamic method' => ['\Rasuvaeff\Understudy\Arg::{$method}();', null];
     }
 }

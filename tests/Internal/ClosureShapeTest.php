@@ -43,6 +43,39 @@ final class ClosureShapeTest
         Assert::string($problem ?? '')->contains($expectedFragment);
     }
 
+    /**
+     * The complaints are asserted whole. A message is what a user acts on,
+     * and every half of a concatenation in one is a mutant a `contains()`
+     * cannot see.
+     */
+    #[DataProvider('messageProvider')]
+    public function saysExactlyWhatIsWrong(string $code, string $expected): void
+    {
+        $call = Parse::expression($code);
+
+        Assert::instanceOf($call, FuncCall::class);
+        Assert::same(ClosureShape::of($call->getArgs()[0]->value)->problem(), $expected);
+    }
+
+    public static function messageProvider(): iterable
+    {
+        yield 'no call at all' => [
+            'when(fn () => true);',
+            'the closure makes no call on a double, so there is nothing to specify. '
+            . 'Call the method you mean: when(fn () => $double->method($argument)).',
+        ];
+        yield 'two calls' => [
+            'when(fn () => $double->find(1) && $double->find(2));',
+            'the closure makes 2 calls, and a specification describes exactly one. '
+            . 'Split it, or hoist the calls that are not being specified out of the closure.',
+        ];
+        yield 'a static call' => [
+            'when(fn () => Clock::now());',
+            'the closure calls a static method, which a double cannot intercept. '
+            . 'Inject an instance dependency instead.',
+        ];
+    }
+
     public static function shapeProvider(): iterable
     {
         yield 'one call, arrow function' => ['when(fn () => $double->find(1));', null];

@@ -8,11 +8,17 @@
         "summary": "build/infection-summary.log"
     },
     "testFramework": "testo",
-    // The PHPStan extension classes are plumbing their mutants cannot
-    // reach from a unit test — the decisions they delegate to (matcher
-    // kinds, closure shape, cardinality) are what this number is about.
-    // Set at introduction (2026-08-25).
-    "minMsi": 85,
+    // Measured 98% on 2026-08-25 after the internals grew whole-message
+    // assertions: a complaint is what a user acts on, and half of a
+    // concatenation in one is a mutant no `contains()` can see. The three
+    // survivors are equivalent and cannot be killed — `Cardinality`'s
+    // `return null` inside the `never` branch (falling through computes the
+    // same null), and both integer mutants on `ClosureShape`'s
+    // `new self(1, 0)` fallback (`staticCalls` is read only when
+    // `methodCalls` is zero). The gate sits below the measurement on
+    // purpose: CI's mutant count differs from a local run by enough that a
+    // gate set exactly at it would fail on an unrelated day.
+    "minMsi": 95,
     "mutators": {
         "@default": true
     }

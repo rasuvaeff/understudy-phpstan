@@ -43,6 +43,9 @@ final class VerbNamesTest
         yield 'another vendor when' => ['App\Support\when', false];
         yield 'our namespace, not a verb' => ['Rasuvaeff\Understudy\forwarding', false];
         yield 'not a verb at all' => ['array_map', false];
+        // Another vendor's namespace is never ours, whatever its length: the
+        // prefix decides, not what happens to sit at the same offset.
+        yield 'a foreign namespace as long as ours' => ['app\\aaaaaaaaaaaaaaaa\\when', false];
     }
 
     #[DataProvider('staticProvider')]
@@ -54,11 +57,12 @@ final class VerbNamesTest
     public static function staticProvider(): iterable
     {
         yield 'the static form' => [Understudy::class, 'when', true];
-        yield 'leading separator' => [Understudy::class, 'expect', true];
+        yield 'leading separator' => ['\\Rasuvaeff\\Understudy\\Understudy', 'expect', true];
         yield 'lowercased' => ['rasuvaeff\understudy\understudy', 'verify', true];
         yield 'our class, not a verb' => [Understudy::class, 'for', false];
         yield 'a verb on somebody else' => ['App\Testing\Doubles', 'when', false];
-        yield 'a namesake class elsewhere' => ['App\Understudy', 'when', false];
+        yield 'a namesake class elsewhere' => ['App\\Understudy', 'when', false];
+        yield 'an upper-case method' => [\Rasuvaeff\Understudy\Understudy::class, 'When', true];
     }
 
     #[DataProvider('shortVerbProvider')]
