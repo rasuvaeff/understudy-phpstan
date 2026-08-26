@@ -110,6 +110,14 @@ make release-check
 - `examples/` is part of the public contract: keep scripts runnable and update
   `examples/README.md` when example usage changes. This package has none —
   the fixture projects are its executable demonstration.
+- **Every gate here reads the working tree; a consumer downloads
+  `git archive`.** Between the two there is `export-ignore` and nothing else, so
+  a file that should not ship reaches users without reddening anything. The
+  `Consumer smoke` job installs a dist archive of the commit into a throwaway
+  project, takes the engine from Packagist the way a user does, and drives `extra.phpstan.includes`, which nothing else exercises at all.
+  The script itself lives in the core repository (`understudy/bin/consumer-smoke`) —
+  one copy, checked out by this workflow; run the whole family from local
+  checkouts with `bin/understudy-consumer-smoke` in the workspace repository.
 - **CI workflows are SHA-pinned.** Every `uses:` in `.github/workflows/*.yml`
   references a 40-char commit SHA with a `# vN` trailing comment
   (e.g. `actions/checkout@<sha> # v4`). Never revert to floating `@vN` tags.
