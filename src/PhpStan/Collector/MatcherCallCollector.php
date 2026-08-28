@@ -30,6 +30,18 @@ final class MatcherCallCollector implements Collector
     {
         $matcher = MatcherName::of($node);
 
-        return $matcher === null ? null : [$node->getStartLine(), $matcher];
+        if ($matcher === null) {
+            return null;
+        }
+
+        // `Arg::captor()` is the one `Arg::` call that is NOT a matcher: it
+        // builds the captor, legitimately outside any specification. The
+        // matcher it leads to is `->capture()`, which has a collector of its
+        // own.
+        if (strtolower($matcher) === 'captor') {
+            return null;
+        }
+
+        return [$node->getStartLine(), $matcher];
     }
 }

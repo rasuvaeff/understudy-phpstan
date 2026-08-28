@@ -89,6 +89,16 @@ final class ClosureShapeTest
             null,
         ];
 
+        // A captor's `->capture()` is a matcher in method-call clothes, not
+        // a call being specified — it must not count.
+        yield 'a capture is not a call' => ['when(fn () => $double->find($ids->capture()));', null];
+        yield 'a capture alone specifies nothing' => ['when(fn () => $ids->capture());', 'nothing to specify'];
+        // With arguments it is not our capture(): the contract takes none.
+        yield 'a capture with an argument is a call' => [
+            'when(fn () => $double->find($camera->capture($frame)));',
+            'makes 2 calls',
+        ];
+
         yield 'no call at all' => ['when(fn () => true);', 'nothing to specify'];
         yield 'two calls' => ['when(fn () => $double->find(1) && $double->find(2));', 'makes 2 calls'];
         yield 'three calls' => [

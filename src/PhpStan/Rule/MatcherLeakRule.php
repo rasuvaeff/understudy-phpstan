@@ -9,6 +9,7 @@ use PHPStan\Analyser\Scope;
 use PHPStan\Node\CollectedDataNode;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
+use Rasuvaeff\Understudy\PhpStan\Collector\CaptureCallCollector;
 use Rasuvaeff\Understudy\PhpStan\Collector\MatcherCallCollector;
 use Rasuvaeff\Understudy\PhpStan\Collector\SpecificationRangeCollector;
 
@@ -52,6 +53,9 @@ final class MatcherLeakRule implements Rule
         /** @var array<string, list<array{int, string}>> $matchersByFile */
         $matchersByFile = $node->get(MatcherCallCollector::class);
 
+        /** @var array<string, list<int>> $capturesByFile */
+        $capturesByFile = $node->get(CaptureCallCollector::class);
+
         $errors = [];
 
         foreach ($matchersByFile as $file => $matchers) {
@@ -66,6 +70,27 @@ final class MatcherLeakRule implements Rule
                     . 'verifySequence(); anywhere else it is passed to the code as a value.',
                     $matcher,
                 ))
+                    ->identifier(self::IDENTIFIER)
+                    ->file($file)
+                    ->line($line)
+                    ->build();
+            }
+        }
+
+        // The captor's capture() is a matcher too, typed `never` by
+        // `CaptorReturnType` for the same reason `Arg::` matchers are — so a
+        // leak of one has to be said here for the same reason theirs is.
+        foreach ($capturesByFile as $file => $lines) {
+            foreach ($lines as $line) {
+                if ($this->covered($specifications[$file] ?? [], $line)) {
+                    continue;
+                }
+
+                $errors[] = RuleErrorBuilder::message(
+                    '`capture()` is a matcher, and this is a real call. A captor records only '
+                    . 'inside when(), expect() or verify(); anywhere else its matcher is passed '
+                    . 'to the code as a value.',
+                )
                     ->identifier(self::IDENTIFIER)
                     ->file($file)
                     ->line($line)

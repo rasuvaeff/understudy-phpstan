@@ -11,6 +11,8 @@ interface Repository
     public function rename(string $name, int $times): void;
 
     public function tag(string $label): bool;
+
+    public function record(string $service, int $outcome, bool $admitted, string $attemptId): void;
 }
 
 final class Book {}
