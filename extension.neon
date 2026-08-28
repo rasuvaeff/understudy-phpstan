@@ -15,6 +15,16 @@ services:
             - phpstan.broker.dynamicStaticMethodReturnTypeExtension
 
     -
+        class: Rasuvaeff\Understudy\PhpStan\CaptorReturnType
+        tags:
+            - phpstan.broker.dynamicMethodReturnTypeExtension
+
+    -
+        class: Rasuvaeff\Understudy\PhpStan\RestArity
+        tags:
+            - phpstan.ignoreErrorExtension
+
+    -
         class: Rasuvaeff\Understudy\PhpStan\BuilderReturnType
         tags:
             - phpstan.broker.dynamicFunctionReturnTypeExtension
@@ -31,5 +41,10 @@ services:
 
     -
         class: Rasuvaeff\Understudy\PhpStan\Collector\MatcherCallCollector
+        tags:
+            - phpstan.collector
+
+    -
+        class: Rasuvaeff\Understudy\PhpStan\Collector\CaptureCallCollector
         tags:
             - phpstan.collector

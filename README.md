@@ -67,6 +67,21 @@ Below level 9 there is nothing to fix here — PHPStan does not check `mixed`
 against a declared parameter — and the rest of the extension works at every
 level.
 
+Two understudy 0.4 idioms are covered the same way:
+
+- **`Arg::rest()`** legitimately passes fewer arguments than the contract
+  declares — `when(fn () => $storage->recordOutcome('svc', Arg::rest()))` —
+  so the `arguments.count` report is ignored wherever a call's last written
+  argument is `Arg::rest()`. In a real call that is still a mistake, and it
+  is reported as the mistake it is: `understudy.matcherLeak` names the leaked
+  matcher (the engine answers the call itself with `ArgumentCountError`).
+- **`Arg::captor()`**'s `$captor->capture()` is a matcher in method-call
+  clothes: typed `never` like the `Arg::` factories (the receiver's type is
+  what decides — a foreign `capture()` is left alone), not counted against
+  "exactly one call per closure", and reported by `understudy.matcherLeak`
+  when it reaches a real call. `Arg::captor()` itself is a factory, not a
+  matcher, and legitimately lives outside the closure.
+
 ### 2. `returns()` is checked against the method being specified
 
 The core declares `when(): WhenBuilder<mixed>`, and it has no choice: which

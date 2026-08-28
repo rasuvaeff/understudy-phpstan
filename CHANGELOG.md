@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- **understudy 0.4 idioms** (rasuvaeff/understudy-phpstan#6). `Arg::rest()`:
+  the `arguments.count` report is ignored (via an `IgnoreErrorExtension`)
+  wherever a call's last written argument is `Arg::rest()`; in a real call
+  the line is reported once, as `understudy.matcherLeak` — the leak is the
+  actual mistake, and the engine answers the call with `ArgumentCountError`.
+  `Arg::captor()`: `$captor->capture()` is typed `never` like the `Arg::`
+  factories when the receiver is a `Captor`, no longer counts against
+  "exactly one call per closure", and is reported by `understudy.matcherLeak`
+  when it reaches a real call; `Arg::captor()` itself stopped being collected
+  as a matcher — it is the factory, legitimately outside any specification,
+  and was falsely reported as a leak.
+
 ## 0.1.3 — 2026-08-28
 
 - Allow `rasuvaeff/understudy` `^0.4`: `Arg::rest()`, `Arg::captor()`,

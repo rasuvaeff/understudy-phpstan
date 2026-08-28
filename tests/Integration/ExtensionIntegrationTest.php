@@ -31,9 +31,12 @@ final class ExtensionIntegrationTest
     {
         // The premise. If PHPStan has nothing to say about matchers at this
         // level even without the extension, the test below proves nothing.
+        // Eight: five argument reports on the original lines, two on the
+        // `Arg::rest()` prefix specification (the arity and the matcher's own
+        // argument), one on the captor's `capture()`.
         $report = $this->analyse('Matchers', 'phpstan-without-extension.neon');
 
-        Assert::same($this->countIn($report, 'Correct.php'), 5);
+        Assert::same($this->countIn($report, 'Correct.php'), 8);
     }
 
     public function withTheExtensionAMatcherFitsWhateverTheContractDeclares(): void
@@ -74,6 +77,19 @@ final class ExtensionIntegrationTest
 
         Assert::true(\in_array('understudy.matcher', $identifiers, strict: true));
         Assert::true(\in_array('understudy.matcherLeak', $identifiers, strict: true));
+
+        // Three leaks: `Arg::int()` in a real call, `Arg::rest()` ending a
+        // real under-arity call, and a `capture()` in a real call. The arity
+        // report for the second is quiet by design — the leak names the
+        // actual mistake — which is what the absent identifier pins.
+        Assert::same(
+            count(array_filter(
+                $identifiers,
+                static fn(string $identifier): bool => $identifier === 'understudy.matcherLeak',
+            )),
+            3,
+        );
+        Assert::false(\in_array('arguments.count', $identifiers, strict: true));
     }
 
     public function everyMisuseIsReportedAndNothingElseIs(): void

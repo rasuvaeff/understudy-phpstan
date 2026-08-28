@@ -1,5 +1,7 @@
 {
     "symbol-whitelist": [
+        "PHPStan\\Analyser\\Error",
+        "PHPStan\\Analyser\\IgnoreErrorExtension",
         "PHPStan\\Analyser\\Scope",
         "PHPStan\\Collectors\\Collector",
         "PHPStan\\Node\\CollectedDataNode",
@@ -16,6 +18,7 @@
         "PHPStan\\Type\\Constant\\ConstantArrayTypeBuilder",
         "PHPStan\\Type\\Constant\\ConstantStringType",
         "PHPStan\\Type\\DynamicFunctionReturnTypeExtension",
+        "PHPStan\\Type\\DynamicMethodReturnTypeExtension",
         "PHPStan\\Type\\DynamicStaticMethodReturnTypeExtension",
         "PHPStan\\Type\\FloatType",
         "PHPStan\\Type\\Generic\\GenericObjectType",
