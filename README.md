@@ -132,6 +132,12 @@ parameters:
         - identifier: understudy.matcherLeak
 ```
 
+Those identifiers are stable. They are what a consumer writes into their own
+`phpstan.neon`, and renaming one would silently stop an `ignoreErrors` entry
+somebody relies on; a new rule gets a new identifier rather than reusing an
+existing one. The **wording** of a message is not stable and a patch release may
+reword one — match on the identifier, never on the sentence.
+
 ## Why `understudy.matcherLeak` exists
 
 Typing every matcher as `never` is what lets one stand in for a typed

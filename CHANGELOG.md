@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- Both READMEs say what was only implied: the `understudy.*` identifiers are
+  stable, because they are what a consumer writes into `ignoreErrors`, while
+  the wording of a message is not.
+
 ## 0.2.1 — 2026-09-03
 
 - The Requirements section of both READMEs said `rasuvaeff/understudy` `^0.1`
