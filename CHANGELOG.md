@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Requirements section of both READMEs said `rasuvaeff/understudy` `^0.1`
   while `composer.json` has required `^0.4` since 0.2.0.
+- Allow `rasuvaeff/understudy` `^0.5`. Widened rather than raised: the
+  extension works against both, and 0.4 consumers should not be cut off from
+  it.
 
 ## 0.2.0 — 2026-08-28
 
