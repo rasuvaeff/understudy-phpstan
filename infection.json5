@@ -15,10 +15,17 @@
     // `return null` inside the `never` branch (falling through computes the
     // same null), and both integer mutants on `ClosureShape`'s
     // `new self(1, 0)` fallback (`staticCalls` is read only when
-    // `methodCalls` is zero). The gate sits below the measurement on
-    // purpose: CI's mutant count differs from a local run by enough that a
-    // gate set exactly at it would fail on an unrelated day.
-    "minMsi": 95,
+    // `methodCalls` is zero).
+    //
+    // Re-measured 2026-09-04 on PHP 8.4 — the version the `Coverage &
+    // Mutation` job pins, and mutants can differ between versions: 188 of 191
+    // killed, 98.43%, the same three survivors. The gate is one mutant below
+    // that — `floor(100 * (killed - 1) / tested)` — which is the slack the
+    // paragraph above was asking for, stated as a rule instead of a round
+    // number: one hard-to-kill line from an unrelated change does not redden
+    // the build before anybody has looked at it, and everything beyond that
+    // does.
+    "minMsi": 97,
     "mutators": {
         "@default": true
     }

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- The mutation gate rises from 95 to 97. Re-measured on PHP 8.4, the version
+  the coverage job pins: 188 of 191 mutants killed, 98.43%, with the same
+  three equivalent survivors the config already names. The gate is one mutant
+  below the measurement rather than a round number three points under it.
+
 - `expectSequence()` is recognised as a specification verb. It was known to
   neither spelling's list, so `SpecificationRangeCollector` never recorded the
   call and `understudy.matcherLeak` was reported for every matcher inside an
