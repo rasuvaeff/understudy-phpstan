@@ -99,8 +99,10 @@ make release-check
   `PHPStan\*` symbol is listed in `composer-require-checker.json`, not
   because the dependency is missing — `phpstan/phpstan` is in `require` — but
   because the checker maps symbols to packages by scanning their files, and
-  there are none to scan. A new PHPStan class used in `src/` fails the gate
-  until it is added to that list, which is the behaviour worth keeping.
+  there are none to scan. A new PHPStan class referenced in `src/` code fails
+  the gate until it is added to that list; one that appears only in an
+  annotation does not trip it, so list those when they are first referenced
+  either way — the list is the map, not the gate.
 - **Psalm can analyse this package even though PHPStan ships as a phar.** The
   `phpstan/phpstan` package registers an autoloader that loads classes out of
   `phpstan.phar`, and Psalm resolves them through it. `findUnusedCode` stays

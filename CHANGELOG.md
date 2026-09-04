@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- **Documentation review fixes.** Requirements now lists the direct
+  `nikic/php-parser` dependency; llms.txt names the engine constraint. The
+  Usage section is titled «Usage» like the rest of the family. AGENTS.md's
+  require-checker rule states what the gate really catches: symbols referenced
+  in code, not annotation-only ones.
+
 ## 0.4.0 — 2026-09-04
 
 A minor rather than a patch: `verify($call, times: -1)` is a report the
