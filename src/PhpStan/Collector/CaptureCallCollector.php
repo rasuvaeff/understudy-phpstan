@@ -18,9 +18,9 @@ use Rasuvaeff\Understudy\Captor;
  * The receiver's type is what decides — a foreign `capture()` on some other
  * object is not a matcher, and reporting it as a leak would be a false
  * accusation in a consumer's own code. Type-checked here, where a Scope is
- * available; the leak rule that reads this out only sees lines.
+ * available; the leak rule that reads this out only sees locations.
  *
- * @implements Collector<MethodCall, int>
+ * @implements Collector<MethodCall, array{int, int}>
  *
  * @internal
  */
@@ -33,7 +33,7 @@ final class CaptureCallCollector implements Collector
     }
 
     #[\Override]
-    public function processNode(Node $node, Scope $scope): ?int
+    public function processNode(Node $node, Scope $scope): ?array
     {
         if (!$node->name instanceof Identifier || $node->name->toLowerString() !== 'capture') {
             return null;
@@ -43,6 +43,6 @@ final class CaptureCallCollector implements Collector
             return null;
         }
 
-        return $node->getStartLine();
+        return [$node->getStartFilePos(), $node->getStartLine()];
     }
 }

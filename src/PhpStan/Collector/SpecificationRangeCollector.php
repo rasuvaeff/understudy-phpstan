@@ -11,7 +11,7 @@ use PHPStan\Collectors\Collector;
 use Rasuvaeff\Understudy\PhpStan\Internal\SpecificationExpr;
 
 /**
- * The lines every specification call spans.
+ * The file offsets every specification call spans.
  *
  * Collected rather than read from a parent node because PHPStan hands a rule
  * a node and a scope and nothing above it, and the order nodes arrive in is
@@ -39,8 +39,8 @@ final class SpecificationRangeCollector implements Collector
             return null;
         }
 
-        $start = $node->getStartLine();
-        $end = $node->getEndLine();
+        $start = $node->getStartFilePos();
+        $end = $node->getEndFilePos();
 
         return $start <= $end ? [$start, $end] : [$end, $start];
     }

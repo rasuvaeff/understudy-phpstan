@@ -106,16 +106,17 @@ final class ExtensionIntegrationTest
         Assert::true(\in_array('understudy.matcher', $identifiers, strict: true));
         Assert::true(\in_array('understudy.matcherLeak', $identifiers, strict: true));
 
-        // Three leaks: `Arg::int()` in a real call, `Arg::rest()` ending a
-        // real under-arity call, and a `capture()` in a real call. The arity
-        // report for the second is quiet by design — the leak names the
-        // actual mistake — which is what the absent identifier pins.
+        // Five leaks: the original three plus an `Arg::int()` and a
+        // `capture()` immediately before a specification on the same line.
+        // Line ranges cannot distinguish those calls; file offsets can. The
+        // arity report is quiet by design — the leak names the actual
+        // mistake — which is what the absent identifier pins.
         Assert::same(
             count(array_filter(
                 $identifiers,
                 static fn(string $identifier): bool => $identifier === 'understudy.matcherLeak',
             )),
-            3,
+            5,
         );
         Assert::false(\in_array('arguments.count', $identifiers, strict: true));
     }
@@ -124,8 +125,8 @@ final class ExtensionIntegrationTest
     {
         $report = $this->analyse('Misuse');
 
-        // Nine mistakes, nine reports, all of them ours.
-        Assert::same($this->countIn($report, 'Wrong.php'), 9);
+        // Ten mistakes, ten reports, all of them ours.
+        Assert::same($this->countIn($report, 'Wrong.php'), 10);
         Assert::same(
             array_values(array_unique(array_map(
                 static fn(string $identifier): string => explode('.', $identifier)[0],
@@ -151,7 +152,7 @@ final class ExtensionIntegrationTest
     {
         $report = $this->analyse('Misuse', 'phpstan-level-0.neon');
 
-        Assert::same($this->countIn($report, 'Wrong.php'), 9);
+        Assert::same($this->countIn($report, 'Wrong.php'), 10);
         Assert::same($this->countIn($report, 'Right.php'), 0);
     }
 
@@ -159,15 +160,15 @@ final class ExtensionIntegrationTest
     {
         $report = $this->analyse('Returns');
 
-        // Four of the five are not our own rules at all: filling in the
+        // Five of the six are not our own rules at all: filling in the
         // builder's template parameter is all the extension does there, and
         // PHPStan checks `returns()` and `answers()` against it on its own.
-        // The fifth is the one the parameter cannot carry — a void method,
+        // The sixth is the one the parameter cannot carry — a void method,
         // whose `WhenBuilder<void>` nobody could satisfy.
-        Assert::same($this->countIn($report, 'Wrong.php'), 5);
+        Assert::same($this->countIn($report, 'Wrong.php'), 6);
         Assert::same(
             array_count_values($this->identifiersIn($report, 'Wrong.php')),
-            ['argument.type' => 4, 'understudy.returns' => 1],
+            ['argument.type' => 5, 'understudy.returns' => 1],
         );
 
         // Answers that fit, and the shapes the extension declines to judge.
