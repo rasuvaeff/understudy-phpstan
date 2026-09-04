@@ -29,6 +29,13 @@ use Rasuvaeff\Understudy\PhpStan\Internal\MatcherName;
  * runtime with `ArgumentCountError`), so silencing the arity half there
  * hides nothing that is not louder elsewhere.
  *
+ * `understudy-psalm` deliberately differs: its suppression requires the call
+ * to sit inside a recorded specification as well, because there a leaked
+ * matcher has no rule of its own to report it — Psalm answers a `never`-typed
+ * argument with `NoValue`, so the leak is caught by the argument diagnostic
+ * that this narrower scope is what keeps alive. Two answers to one question,
+ * each right for the analyser it lives in.
+ *
  * @internal
  */
 final class RestArity implements IgnoreErrorExtension

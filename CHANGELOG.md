@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- `verify($call, times: -1)` is reported. `verifyProblem()` fell through to
+  the `minimum`/`maximum` pair and dropped `times` on the way, so a negative
+  exact count reached no check at all. It has a unit test rather than a
+  fixture on purpose: `verify()` declares `int<0, max>|null`, so wherever
+  PHPStan checks that annotation it reports the argument itself and this rule
+  never speaks — what the rule buys is the levels where it does not, and these
+  rules run at every level, including 0.
+- `RestArity` says why it differs from the Psalm sibling on `Arg::rest()`.
+  Both packages answer the same question and neither is a shortcut: there a
+  leaked matcher has no rule of its own, so the narrower scope is what keeps
+  the diagnostic alive; here `Rule\MatcherLeakRule` says it louder.
+- The `VerbNames` docblock carries the history its Psalm counterpart had —
+  the `calls()` closure reported as a leak while dogfooding, and `lastCall()`
+  silently outside every rule. The two copies had drifted apart, and the
+  lesson is the same in both.
+
 ## 0.3.0 — 2026-09-04
 
 A minor rather than a patch: the misuse rules now fire inside

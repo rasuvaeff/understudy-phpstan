@@ -63,6 +63,10 @@ final class CardinalityTest
         yield 'an exact count and a minimum' => [['times' => 3, 'minimum' => 1], true];
         yield 'an exact count and a maximum' => [['times' => 3, 'maximum' => 5], true];
         yield 'swapped bounds' => [['minimum' => 5, 'maximum' => 2], true];
+        // An exact count of its own used to reach no check at all: the
+        // fall-through carried `minimum`/`maximum` and dropped `times`.
+        yield 'a negative exact count' => [['times' => -1], true];
+        yield 'a zero exact count is a claim, not a mistake' => [['times' => 0], false];
     }
 
     /**

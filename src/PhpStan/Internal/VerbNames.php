@@ -27,8 +27,12 @@ final class VerbNames
     /**
      * The static form carries the call-closure readers too. `calls()`,
      * `lastCall()` and `verifySequence()` have no free-function spelling, and
-     * their closures take the same matchers `when()` does. A reader added to
-     * the core belongs in this list the day it is added.
+     * their closures take the same matchers `when()` does — found by
+     * dogfooding on yii3-correlation-id, where the matcher in a `calls()`
+     * closure was reported exactly like a leak. A reader added to the core
+     * belongs in this list the day it is added: `lastCall()` arrived after
+     * the extension was written and was silently outside every rule until
+     * somebody noticed.
      *
      * Saying that is not enough on its own — `lastCall()` was outside every
      * rule until somebody noticed, and `expectSequence()` repeated it, which
