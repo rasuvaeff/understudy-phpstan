@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- **`wire()`'s shape disagreed with the core on a parameter naming more than
+  one contract.** An intersection — `BookRepository&Auditor` — is ONE double
+  standing for both, which is what `Wire::resolve()` builds; the extension
+  dropped the parameter, so its key was reported as a missing offset on code
+  that wires and runs. A union of two object types makes the core refuse the
+  class outright (`CannotWire`), and reporting a missing key there named the
+  wrong mistake: no shape describes a call that never returns, so none is
+  produced. Fixes #16.
+
 - The mutation gate rises from 95 to 97. Re-measured on PHP 8.4, the version
   the coverage job pins: 188 of 191 mutants killed, 98.43%, with the same
   three equivalent survivors the config already names. The gate is one mutant

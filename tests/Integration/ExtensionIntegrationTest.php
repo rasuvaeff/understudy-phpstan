@@ -187,6 +187,49 @@ final class ExtensionIntegrationTest
     }
 
     /**
+     * The shape has to agree with what `Wire::resolve()` actually does with a
+     * parameter naming more than one contract, and it did not.
+     *
+     * An INTERSECTION is one double standing for every contract in it — the
+     * core sends it down the same branch a single contract takes. The
+     * extension dropped the parameter instead, so its key was reported as a
+     * missing offset on code that wires and runs.
+     *
+     * A UNION of two object types is refused outright: `CannotWire` aborts
+     * the call, so no key exists and no shape describes it. Reporting a
+     * missing key there named the wrong mistake; the core's own declaration
+     * stands and the double is a plain `object`.
+     */
+    public function theWireShapeAgreesWithTheCoreOnUnionsAndIntersections(): void
+    {
+        $report = $this->analyse('Wire');
+
+        // The intersection lives in Right.php and both of its halves are
+        // called there, which the count above pins at zero reports.
+        Assert::same($this->countIn($report, 'Right.php'), 0);
+
+        $messages = $this->messagesIn($report, 'Wrong.php');
+
+        Assert::same(
+            count(array_filter(
+                $messages,
+                static fn(array $m): bool => str_contains($m['message'], 'undefined method object::now()'),
+            )),
+            1,
+        );
+
+        // And no report claiming the refused union's key is missing: the key
+        // is not missing, the call never returns.
+        Assert::same(
+            count(array_filter(
+                $messages,
+                static fn(array $m): bool => str_contains($m['message'], "Offset 'either'"),
+            )),
+            0,
+        );
+    }
+
+    /**
      * @return array<string, list<array{message: string, line: int|null, identifier?: string|null}>>
      */
     private function analyse(string $fixture, string $config = 'phpstan.neon'): array

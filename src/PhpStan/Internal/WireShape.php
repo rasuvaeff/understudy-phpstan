@@ -9,6 +9,7 @@ use PHPStan\Analyser\Scope;
 use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Type\Constant\ConstantArrayTypeBuilder;
 use PHPStan\Type\Constant\ConstantStringType;
+use PHPStan\Type\IntersectionType;
 use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
 
@@ -65,13 +66,23 @@ final readonly class WireShape
         $parameters = $variants[0]->getParameters();
 
         foreach ($parameters as $parameter) {
-            $objectType = $this->soleObjectType($parameter->getType());
+            $type = $parameter->getType();
 
-            if (!$objectType instanceof \PHPStan\Type\Type) {
+            if ($this->isUndecidable($type)) {
+                // The core refuses to wire this class at all — the call
+                // throws `CannotWire` before it returns anything — so there
+                // is no shape to describe, not even for the parameters that
+                // would have been fine.
+                return null;
+            }
+
+            $contract = $this->contractType($type);
+
+            if (!$contract instanceof \PHPStan\Type\Type) {
                 continue;
             }
 
-            $doubles->setOffsetValueType(new ConstantStringType($parameter->getName()), $objectType);
+            $doubles->setOffsetValueType(new ConstantStringType($parameter->getName()), $contract);
             $found = true;
         }
 
@@ -87,15 +98,42 @@ final readonly class WireShape
     }
 
     /**
-     * The contract a constructor parameter stands for, when it is one object
-     * type and nothing else. A union, a scalar or an untyped parameter is
-     * not a double, and `wire()` does not make one for it.
+     * The contract a constructor parameter stands for.
+     *
+     * One object type is one double, and `?Contract` is the same double: the
+     * core builds one rather than passing null wherever it can. An
+     * intersection is one double standing for every contract in it — the core
+     * sends it down the same branch a single contract takes — so the key
+     * keeps the intersection, and both halves stay callable on it. Reporting
+     * `A&B` as `A` was narrower than the object the call hands back, and
+     * dropping the parameter made its key a missing offset on working code.
+     *
+     * A scalar or an untyped parameter is not a double, and `wire()` does not
+     * make one for it.
      */
-    private function soleObjectType(Type $type): ?Type
+    private function contractType(Type $type): ?Type
     {
         $classNames = $type->getObjectClassNames();
 
-        return \count($classNames) === 1 ? new ObjectType($classNames[0]) : null;
+        if (\count($classNames) === 1) {
+            return new ObjectType($classNames[0]);
+        }
+
+        return $type instanceof IntersectionType ? $type : null;
+    }
+
+    /**
+     * Whether this parameter makes the core refuse the whole class.
+     *
+     * A union naming more than one object type is undecidable by design:
+     * `Wire::resolve()` throws `CannotWire::undecidableParameter` rather than
+     * guess which contract to double, and the exception aborts the call
+     * before any key exists. An intersection is not that — it names several
+     * contracts for ONE double.
+     */
+    private function isUndecidable(Type $type): bool
+    {
+        return \count($type->getObjectClassNames()) > 1 && !$type instanceof IntersectionType;
     }
 
     /**

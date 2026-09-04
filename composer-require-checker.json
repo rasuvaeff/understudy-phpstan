@@ -23,6 +23,7 @@
         "PHPStan\\Type\\FloatType",
         "PHPStan\\Type\\Generic\\GenericObjectType",
         "PHPStan\\Type\\IntegerType",
+        "PHPStan\\Type\\IntersectionType",
         "PHPStan\\Type\\MixedType",
         "PHPStan\\Type\\NeverType",
         "PHPStan\\Type\\ObjectType",
