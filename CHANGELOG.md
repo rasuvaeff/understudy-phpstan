@@ -5,7 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.3.0 — 2026-09-04
+
+A minor rather than a patch: the misuse rules now fire inside
+`expectSequence()`, where they were silently absent, so a consumer's own code
+can draw a diagnostic it did not draw before.
+
+- Allow `rasuvaeff/understudy` `^0.6`. Widened rather than raised: the
+  extension works against 0.4, 0.5 and 0.6, and consumers on the older ones
+  should not be cut off from it.
 
 - **`wire()`'s shape disagreed with the core on a parameter naming more than
   one contract.** An intersection — `BookRepository&Auditor` — is ONE double
