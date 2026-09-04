@@ -7,6 +7,7 @@ namespace Fixture\Matchers;
 use Rasuvaeff\Understudy\Arg;
 use Rasuvaeff\Understudy\Understudy;
 
+use function Rasuvaeff\Understudy\expectSequence;
 use function Rasuvaeff\Understudy\when;
 
 final class Correct
@@ -43,5 +44,26 @@ final class Correct
         $ids = Arg::captor();
 
         when(fn() => $repository->find($ids->capture()))->returns(null);
+    }
+
+    /**
+     * `expectSequence()` arms a whole protocol, and each of its closures
+     * carries the same matchers `when()` does — in both spellings, because
+     * this verb has a free function as well as a static form.
+     */
+    public function sequenceSpecification(): void
+    {
+        $repository = Understudy::for(Repository::class);
+        $ids = Arg::captor();
+
+        expectSequence(
+            fn() => $repository->find(Arg::int()),
+            fn() => $repository->tag(Arg::string()),
+        );
+
+        Understudy::expectSequence(
+            fn() => $repository->rename(Arg::string(), Arg::int()),
+            fn() => $repository->find($ids->capture()),
+        );
     }
 }

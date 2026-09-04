@@ -52,9 +52,10 @@ project never names one.
   `never` or `mixed`: `WhenBuilder<void>` is a claim nobody can satisfy.
 - `Understudy::wire(Sut::class)` gets the shape read off the constructor. A
   dynamic class-string is left alone.
-- Both spellings are understood: the free functions a test file imports and
-  the `Understudy::` static form Pest users reach for, plus the readers that
-  have no function spelling — `calls()`, `lastCall()`, `verifySequence()`.
+- Both spellings are understood: the free functions a test file imports
+  (`when()`, `expect()`, `expectSequence()`, `verify()`) and the `Understudy::`
+  static form Pest users reach for, plus the readers that have no function
+  spelling — `calls()`, `lastCall()`, `verifySequence()`.
 - No baseline, no ignored errors of our own. Rules stay silent whenever they
   are not sure.
 

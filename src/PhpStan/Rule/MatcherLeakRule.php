@@ -66,8 +66,9 @@ final class MatcherLeakRule implements Rule
 
                 $errors[] = RuleErrorBuilder::message(sprintf(
                     '`Arg::%s()` is a matcher, and this is a real call. A matcher only means '
-                    . 'something inside when(), expect(), verify(), calls(), lastCall() or '
-                    . 'verifySequence(); anywhere else it is passed to the code as a value.',
+                    . 'something inside when(), expect(), expectSequence(), verify(), calls(), '
+                    . 'lastCall() or verifySequence(); anywhere else it is passed to the code '
+                    . 'as a value.',
                     $matcher,
                 ))
                     ->identifier(self::IDENTIFIER)
@@ -88,8 +89,8 @@ final class MatcherLeakRule implements Rule
 
                 $errors[] = RuleErrorBuilder::message(
                     '`capture()` is a matcher, and this is a real call. A captor records only '
-                    . 'inside when(), expect() or verify(); anywhere else its matcher is passed '
-                    . 'to the code as a value.',
+                    . 'inside when(), expect(), expectSequence() or verify(); anywhere else its '
+                    . 'matcher is passed to the code as a value.',
                 )
                     ->identifier(self::IDENTIFIER)
                     ->file($file)

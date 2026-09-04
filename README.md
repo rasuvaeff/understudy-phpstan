@@ -67,6 +67,13 @@ Below level 9 there is nothing to fix here — PHPStan does not check `mixed`
 against a declared parameter — and the rest of the extension works at every
 level.
 
+A specification is any of understudy's call-closure verbs, in either
+spelling: the free functions `when()`, `expect()`, `expectSequence()` and
+`verify()`, the same names on `Understudy::`, and the readers that exist only
+there — `calls()`, `lastCall()` and `verifySequence()`. Every closure of a
+protocol counts, so a matcher in the third step of an `expectSequence()` is
+read exactly like one in a `when()`.
+
 Two understudy 0.4 idioms are covered the same way:
 
 - **`Arg::rest()`** legitimately passes fewer arguments than the contract

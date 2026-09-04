@@ -60,4 +60,18 @@ final class Wrong
 
         $repository->find($ids->capture());
     }
+
+    /**
+     * A step of a protocol is judged like any other specification: the wrong
+     * kind of matcher in the second one is the same mistake as in the first.
+     */
+    public function matcherOfTheWrongKindInAProtocolStep(): void
+    {
+        $repository = Understudy::for(Repository::class);
+
+        Understudy::expectSequence(
+            fn() => $repository->find(Arg::int()),
+            fn() => $repository->tag(Arg::int()),
+        );
+    }
 }
