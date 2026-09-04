@@ -13,7 +13,7 @@ use Rasuvaeff\Understudy\PhpStan\Internal\MatcherName;
 /**
  * Where every `Arg::` matcher is written.
  *
- * @implements Collector<StaticCall, array{int, string}>
+ * @implements Collector<StaticCall, array{int, int, string}>
  *
  * @internal
  */
@@ -42,6 +42,6 @@ final class MatcherCallCollector implements Collector
             return null;
         }
 
-        return [$node->getStartLine(), $matcher];
+        return [$node->getStartFilePos(), $node->getStartLine(), $matcher];
     }
 }

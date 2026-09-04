@@ -61,6 +61,21 @@ final class Wrong
         $repository->find($ids->capture());
     }
 
+    public function matcherBeforeASpecificationOnTheSameLine(): void
+    {
+        $repository = Understudy::for(Repository::class);
+
+        [$repository->find(Arg::int()), when(fn() => $repository->find(1))];
+    }
+
+    public function captureBeforeASpecificationOnTheSameLine(): void
+    {
+        $repository = Understudy::for(Repository::class);
+        $ids = Arg::captor();
+
+        [$repository->find($ids->capture()), when(fn() => $repository->find(1))];
+    }
+
     /**
      * A step of a protocol is judged like any other specification: the wrong
      * kind of matcher in the second one is the same mistake as in the first.

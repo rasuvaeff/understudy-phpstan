@@ -10,6 +10,7 @@ use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Stmt\Expression;
+use PhpParser\Node\Stmt\Return_;
 use PHPStan\Analyser\Scope;
 use PHPStan\Reflection\ExtendedMethodReflection;
 use PHPStan\Reflection\ParameterReflection;
@@ -95,6 +96,10 @@ final readonly class SpecifiedCall
 
         $first = $closure->stmts[0];
 
-        return $first instanceof Expression ? $first->expr : null;
+        return match (true) {
+            $first instanceof Expression => $first->expr,
+            $first instanceof Return_ => $first->expr,
+            default => null,
+        };
     }
 }

@@ -50,17 +50,17 @@ final class MatcherLeakRule implements Rule
         /** @var array<string, list<array{int, int}>> $specifications */
         $specifications = $node->get(SpecificationRangeCollector::class);
 
-        /** @var array<string, list<array{int, string}>> $matchersByFile */
+        /** @var array<string, list<array{int, int, string}>> $matchersByFile */
         $matchersByFile = $node->get(MatcherCallCollector::class);
 
-        /** @var array<string, list<int>> $capturesByFile */
+        /** @var array<string, list<array{int, int}>> $capturesByFile */
         $capturesByFile = $node->get(CaptureCallCollector::class);
 
         $errors = [];
 
         foreach ($matchersByFile as $file => $matchers) {
-            foreach ($matchers as [$line, $matcher]) {
-                if ($this->covered($specifications[$file] ?? [], $line)) {
+            foreach ($matchers as [$offset, $line, $matcher]) {
+                if ($this->covered($specifications[$file] ?? [], $offset)) {
                     continue;
                 }
 
@@ -81,9 +81,9 @@ final class MatcherLeakRule implements Rule
         // The captor's capture() is a matcher too, typed `never` by
         // `CaptorReturnType` for the same reason `Arg::` matchers are — so a
         // leak of one has to be said here for the same reason theirs is.
-        foreach ($capturesByFile as $file => $lines) {
-            foreach ($lines as $line) {
-                if ($this->covered($specifications[$file] ?? [], $line)) {
+        foreach ($capturesByFile as $file => $captures) {
+            foreach ($captures as [$offset, $line]) {
+                if ($this->covered($specifications[$file] ?? [], $offset)) {
                     continue;
                 }
 
@@ -105,10 +105,10 @@ final class MatcherLeakRule implements Rule
     /**
      * @param list<array{int, int}> $ranges
      */
-    private function covered(array $ranges, int $line): bool
+    private function covered(array $ranges, int $offset): bool
     {
         foreach ($ranges as [$start, $end]) {
-            if ($line >= $start && $line <= $end) {
+            if ($offset >= $start && $offset <= $end) {
                 return true;
             }
         }

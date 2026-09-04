@@ -26,6 +26,15 @@ final class Wrong
         when(static fn(): bool => $gate->open(Arg::string()));
     }
 
+    public function wrongKindOfMatcherInAReturnClosure(): void
+    {
+        $gate = Understudy::for(Gate::class);
+
+        when(static function () use (&$gate): bool {
+            return $gate->open(Arg::string());
+        });
+    }
+
     /**
      * An object parameter, which is the pairing the unit test cannot build:
      * describing an object type needs a reflection provider, and that exists
