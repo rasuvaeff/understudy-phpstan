@@ -110,6 +110,14 @@ $wired['doubles']['repository'];  // Offset 'repository' does not exist on
 $wired['doubles']['clock']->tick();  // Call to an undefined method Clock::tick().
 ```
 
+The shape says what the core builds, and only that. A parameter typed
+`BookRepository&Auditor` is ONE double standing for both contracts, so the key
+keeps the intersection and both halves stay callable. A parameter typed
+`BookRepository|Clock` makes the core refuse the class outright — `CannotWire`,
+because picking one of the two would be a guess — so no shape describes the
+call at all and the core's own `array{sut: object, doubles: array<string,
+object>}` stands. A dynamic class-string is left alone for the same reason.
+
 ### 4. Specifications that cannot work are reported
 
 Each of these has a runtime counterpart — the engine throws, or the

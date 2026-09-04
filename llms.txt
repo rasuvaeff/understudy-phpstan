@@ -50,8 +50,11 @@ project never names one.
   `returns()` and `answers()` are checked against the method being specified
   rather than against `mixed`. Left alone when the method returns `void`,
   `never` or `mixed`: `WhenBuilder<void>` is a claim nobody can satisfy.
-- `Understudy::wire(Sut::class)` gets the shape read off the constructor. A
-  dynamic class-string is left alone.
+- `Understudy::wire(Sut::class)` gets the shape read off the constructor. An
+  intersection parameter is one double and keeps the intersection; a union
+  naming two object types makes the core refuse the class (`CannotWire`), so
+  no shape is produced for that call at all. A dynamic class-string is left
+  alone.
 - Both spellings are understood: the free functions a test file imports
   (`when()`, `expect()`, `expectSequence()`, `verify()`) and the `Understudy::`
   static form Pest users reach for, plus the readers that have no function
