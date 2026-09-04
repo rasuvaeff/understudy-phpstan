@@ -17,7 +17,7 @@ PHPStan extension for [understudy](https://github.com/rasuvaeff/understudy).
 
 - PHP 8.3 - 8.5
 - `phpstan/phpstan` ^2.2.2
-- `rasuvaeff/understudy` ^0.4 || ^0.5 || ^0.6
+- `rasuvaeff/understudy` ^0.4 || ^0.5 || ^0.6 || ^0.7
 
 ## Installation
 
