@@ -31,12 +31,13 @@ final class ExtensionIntegrationTest
     {
         // The premise. If PHPStan has nothing to say about matchers at this
         // level even without the extension, the test below proves nothing.
-        // Eight: five argument reports on the original lines, two on the
+        // Thirteen: five argument reports on the original lines, two on the
         // `Arg::rest()` prefix specification (the arity and the matcher's own
-        // argument), one on the captor's `capture()`.
+        // argument), one on the captor's `capture()`, five on the matchers of
+        // the two armed protocols.
         $report = $this->analyse('Matchers', 'phpstan-without-extension.neon');
 
-        Assert::same($this->countIn($report, 'Correct.php'), 8);
+        Assert::same($this->countIn($report, 'Correct.php'), 13);
     }
 
     public function withTheExtensionAMatcherFitsWhateverTheContractDeclares(): void
@@ -44,6 +45,33 @@ final class ExtensionIntegrationTest
         $report = $this->analyse('Matchers');
 
         Assert::same($this->countIn($report, 'Correct.php'), 0);
+    }
+
+    /**
+     * A verb the extension does not know is worse than no extension at all:
+     * every matcher inside it becomes a leak report on correct code, because
+     * `ArgReturnType` has already typed the matcher `never` and nothing
+     * records the call as a specification.
+     *
+     * `expectSequence()` was outside every rule until 0.2.2 — the second verb
+     * to be, after `lastCall()`. Both of its spellings are exercised in the
+     * fixture, and this is the assertion that would have caught it: five
+     * false leaks in `Correct.php`, and the one true report in `Wrong.php`
+     * replaced by a leak that names the wrong mistake.
+     */
+    public function aProtocolStepIsASpecificationLikeAnyOther(): void
+    {
+        $identifiers = $this->identifiersIn($this->analyse('Matchers'), 'Wrong.php');
+
+        // Two wrong-kind matchers: one in a plain `when()`, one in the second
+        // step of an armed protocol.
+        Assert::same(
+            count(array_filter(
+                $identifiers,
+                static fn(string $identifier): bool => $identifier === 'understudy.matcher',
+            )),
+            2,
+        );
     }
 
     public function nothingAroundTheMatcherIsSilenced(): void

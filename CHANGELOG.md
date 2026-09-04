@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- `expectSequence()` is recognised as a specification verb. It was known to
+  neither spelling's list, so `SpecificationRangeCollector` never recorded the
+  call and `understudy.matcherLeak` was reported for every matcher inside an
+  armed protocol — a false report on code the engine accepts. The closure and
+  matcher-kind rules were silently absent on the same closures. Fixes #13.
+- `VerbNamesTest` now walks the core's own public surface and fails when a
+  closure-taking verb is missing from either list. `expectSequence()` was the
+  second verb to fall outside every rule after `lastCall()`; a list nobody
+  checks is what let both happen.
 - Both READMEs say what was only implied: the `understudy.*` identifiers are
   stable, because they are what a consumer writes into `ignoreErrors`, while
   the wording of a message is not.

@@ -12,7 +12,7 @@ use Rasuvaeff\Understudy\PhpStan\Internal\SpecificationCheck;
 use Rasuvaeff\Understudy\PhpStan\Internal\SpecificationExpr;
 
 /**
- * The free-function form: `when()`, `expect()`, `verify()`.
+ * The free-function form: `when()`, `expect()`, `expectSequence()`, `verify()`.
  *
  * @implements Rule<FuncCall>
  *
