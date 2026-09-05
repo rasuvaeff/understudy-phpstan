@@ -18,7 +18,7 @@ PHPStan-расширение для [understudy](https://github.com/rasuvaeff/un
 - PHP 8.3 - 8.5
 - `phpstan/phpstan` ^2.2.2
 - `nikic/php-parser` ^5.0
-- `rasuvaeff/understudy` ^0.8 || ^1.0
+- `rasuvaeff/understudy` ^0.8 || ^0.9
 
 ## Установка
 
