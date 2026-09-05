@@ -10,6 +10,7 @@ use PHPStan\Node\CollectedDataNode;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 use Rasuvaeff\Understudy\PhpStan\Collector\CaptureCallCollector;
+use Rasuvaeff\Understudy\PhpStan\Collector\HoistedMatcherCollector;
 use Rasuvaeff\Understudy\PhpStan\Collector\MatcherCallCollector;
 use Rasuvaeff\Understudy\PhpStan\Collector\SpecificationRangeCollector;
 
@@ -55,6 +56,17 @@ final class MatcherLeakRule implements Rule
 
         /** @var array<string, list<array{int, int}>> $capturesByFile */
         $capturesByFile = $node->get(CaptureCallCollector::class);
+
+        // A matcher that is stored rather than passed is nobody's argument.
+        // Its range joins the specification ranges, because the question this
+        // rule asks — "did this matcher reach a real call?" — is answered no
+        // for it in the same way.
+        /** @var array<string, list<array{int, int}>> $hoistedByFile */
+        $hoistedByFile = $node->get(HoistedMatcherCollector::class);
+
+        foreach ($hoistedByFile as $file => $ranges) {
+            $specifications[$file] = array_merge($specifications[$file] ?? [], $ranges);
+        }
 
         $errors = [];
 

@@ -12,6 +12,7 @@ use PHPStan\Type\Constant\ConstantStringType;
 use PHPStan\Type\IntersectionType;
 use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
+use PHPStan\Type\TypeCombinator;
 
 /**
  * The precise shape `wire()` hands back for a named class.
@@ -66,7 +67,13 @@ final readonly class WireShape
         $parameters = $variants[0]->getParameters();
 
         foreach ($parameters as $parameter) {
-            $type = $parameter->getType();
+            // `?Contract` is the same double — the core builds one rather than
+            // passing null wherever it can — so null is dropped before the
+            // type is read. Without this the union answered no class name, no
+            // shape was built for the key, and `$wired['doubles']['gate']`
+            // stayed `object`: "Call to an undefined method object::find()" on
+            // working code, with the docblock below promising the opposite.
+            $type = TypeCombinator::removeNull($parameter->getType());
 
             if ($this->isUndecidable($type)) {
                 // The core refuses to wire this class at all — the call

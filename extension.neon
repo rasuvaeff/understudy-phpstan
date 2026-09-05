@@ -48,3 +48,8 @@ services:
         class: Rasuvaeff\Understudy\PhpStan\Collector\CaptureCallCollector
         tags:
             - phpstan.collector
+
+    -
+        class: Rasuvaeff\Understudy\PhpStan\Collector\HoistedMatcherCollector
+        tags:
+            - phpstan.collector

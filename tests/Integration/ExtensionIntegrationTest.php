@@ -125,8 +125,10 @@ final class ExtensionIntegrationTest
     {
         $report = $this->analyse('Misuse');
 
-        // Ten mistakes, ten reports, all of them ours.
-        Assert::same($this->countIn($report, 'Wrong.php'), 10);
+        // Fifteen mistakes, fifteen reports, all of them ours. The last
+        // five are impossible bounds written past the first link of the
+        // chain, which the rule used to walk straight past.
+        Assert::same($this->countIn($report, 'Wrong.php'), 15);
         Assert::same(
             array_values(array_unique(array_map(
                 static fn(string $identifier): string => explode('.', $identifier)[0],
@@ -152,7 +154,7 @@ final class ExtensionIntegrationTest
     {
         $report = $this->analyse('Misuse', 'phpstan-level-0.neon');
 
-        Assert::same($this->countIn($report, 'Wrong.php'), 10);
+        Assert::same($this->countIn($report, 'Wrong.php'), 15);
         Assert::same($this->countIn($report, 'Right.php'), 0);
     }
 

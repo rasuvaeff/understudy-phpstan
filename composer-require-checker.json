@@ -29,6 +29,7 @@
         "PHPStan\\Type\\ObjectType",
         "PHPStan\\Type\\StringType",
         "PHPStan\\Type\\Type",
+        "PHPStan\\Type\\TypeCombinator",
         "PHPStan\\Type\\VerbosityLevel",
         "PHPStan\\Type\\VoidType"
     ],

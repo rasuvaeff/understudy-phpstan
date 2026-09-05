@@ -66,3 +66,20 @@ final readonly class Ambiguous
         }
     }
 }
+
+/**
+ * A nullable contract parameter. The core builds a double for it rather than
+ * passing null, and the shape has to say so — a key typed `object` turns
+ * `$wired['doubles']['clock']->now()` into "call to an undefined method".
+ */
+final readonly class Optional
+{
+    public function __construct(
+        private ?Clock $clock,
+    ) {}
+
+    public function stamp(): int
+    {
+        return $this->clock?->now() ?? 0;
+    }
+}
