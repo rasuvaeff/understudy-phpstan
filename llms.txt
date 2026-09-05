@@ -16,7 +16,7 @@ includes:
 ```
 
 Namespace: `Rasuvaeff\Understudy\PhpStan`. Requires PHP 8.3 - 8.5,
-`phpstan/phpstan ^2.2.2` and `rasuvaeff/understudy ^0.8`.
+`phpstan/phpstan ^2.2.2` and `rasuvaeff/understudy ^0.8 || ^1.0`.
 
 ## API
 
@@ -31,12 +31,12 @@ project never names one.
   NOTHING is suppressed: a wrong argument beside the matcher, an undefined
   method on the double, and the statements around the closure all keep their
   reports.
-- `Arg::rest()` (understudy 0.4) legitimately passes fewer arguments than the
+- `Arg::rest()` legitimately passes fewer arguments than the
   contract declares: the `arguments.count` report is ignored wherever a
   call's last written argument is `Arg::rest()`. In a real call the line is
   reported once, as `understudy.matcherLeak` — the leak is the actual
   mistake, and the engine answers the call with `ArgumentCountError`.
-- `$captor->capture()` (understudy 0.4, `Arg::captor()`) is a matcher too:
+- `$captor->capture()` (`Arg::captor()`) is a matcher too:
   typed `never` when the receiver is a `Captor` (a foreign `capture()` is
   left alone), not counted against "exactly one call per closure", and
   reported by `understudy.matcherLeak` in a real call. `Arg::captor()` itself

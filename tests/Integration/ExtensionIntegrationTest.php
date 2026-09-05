@@ -162,15 +162,17 @@ final class ExtensionIntegrationTest
     {
         $report = $this->analyse('Returns');
 
-        // Five of the six are not our own rules at all: filling in the
+        // Five of the eight are not our own rules at all: filling in the
         // builder's template parameter is all the extension does there, and
         // PHPStan checks `returns()` and `answers()` against it on its own.
-        // The sixth is the one the parameter cannot carry — a void method,
-        // whose `WhenBuilder<void>` nobody could satisfy.
-        Assert::same($this->countIn($report, 'Wrong.php'), 6);
+        // The other three are the one the parameter cannot carry — a void
+        // method, whose `WhenBuilder<void>` nobody could satisfy — written
+        // directly on the verb and past a `times()` and a `then()` link,
+        // which the rule used to walk straight past.
+        Assert::same($this->countIn($report, 'Wrong.php'), 8);
         Assert::same(
             array_count_values($this->identifiersIn($report, 'Wrong.php')),
-            ['argument.type' => 5, 'understudy.returns' => 1],
+            ['argument.type' => 5, 'understudy.returns' => 3],
         );
 
         // Answers that fit, and the shapes the extension declines to judge.

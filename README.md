@@ -18,7 +18,7 @@ PHPStan extension for [understudy](https://github.com/rasuvaeff/understudy).
 - PHP 8.3 - 8.5
 - `phpstan/phpstan` ^2.2.2
 - `nikic/php-parser` ^5.0
-- `rasuvaeff/understudy` ^0.8
+- `rasuvaeff/understudy` ^0.8 || ^1.0
 
 ## Installation
 
@@ -75,7 +75,7 @@ there — `calls()`, `lastCall()` and `verifySequence()`. Every closure of a
 protocol counts, so a matcher in the third step of an `expectSequence()` is
 read exactly like one in a `when()`.
 
-Two understudy 0.4 idioms are covered the same way:
+Two more idioms are covered the same way:
 
 - **`Arg::rest()`** legitimately passes fewer arguments than the contract
   declares — `when(fn () => $storage->recordOutcome('svc', Arg::rest()))` —

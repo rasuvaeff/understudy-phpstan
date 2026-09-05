@@ -7,6 +7,7 @@ namespace Rasuvaeff\Understudy\PhpStan\Rule;
 use PhpParser\Node;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
+use PhpParser\Node\Expr\NullsafeMethodCall;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Identifier;
 use PHPStan\Analyser\Scope;
@@ -50,7 +51,16 @@ final class VoidReturnsRule implements Rule
             return [];
         }
 
+        // Anywhere on the chain, not only directly on the verb:
+        // `when(...)->times(2)->returns(null)` and `->then()->returns(null)`
+        // make the same claim as `when(...)->returns(null)`, and reading only
+        // the immediate receiver found a `MethodCall` there and gave up — the
+        // blindness `FluentCardinalityRule` had for `times()` until 0.5.0.
         $specification = $node->var;
+
+        while ($specification instanceof MethodCall || $specification instanceof NullsafeMethodCall) {
+            $specification = $specification->var;
+        }
 
         if (!$specification instanceof FuncCall && !$specification instanceof StaticCall) {
             return [];
