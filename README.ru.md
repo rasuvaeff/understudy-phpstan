@@ -18,7 +18,7 @@ PHPStan-расширение для [understudy](https://github.com/rasuvaeff/un
 - PHP 8.3 - 8.5
 - `phpstan/phpstan` ^2.2.2
 - `nikic/php-parser` ^5.0
-- `rasuvaeff/understudy` ^0.8
+- `rasuvaeff/understudy` ^0.8 || ^0.9
 
 ## Установка
 
@@ -75,7 +75,7 @@ call-замыкание, в обоих написаниях: свободные 
 Учитывается каждое замыкание протокола: матчер в третьем шаге
 `expectSequence()` читается ровно так же, как матчер в `when()`.
 
-Две идиомы understudy 0.4 покрыты так же:
+Ещё две идиомы покрыты так же:
 
 - **`Arg::rest()`** легитимно передаёт меньше аргументов, чем объявляет
   контракт, — `when(fn () => $storage->recordOutcome('svc', Arg::rest()))` —

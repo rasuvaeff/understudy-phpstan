@@ -67,4 +67,27 @@ final class Wrong
 
         Understudy::when(static fn(): bool => $gate->open(1))->returns(7);
     }
+
+    /**
+     * The same claim past the first link of the chain. Reading only the
+     * immediate receiver of `returns()` found a `MethodCall` there and gave
+     * up, so both of these were silent while the form above was reported.
+     */
+    public function returnsOnAVoidMethodAfterTimes(): void
+    {
+        $gate = Understudy::for(Gate::class);
+
+        when(static function () use ($gate): void {
+            $gate->close();
+        })->times(2)->returns(null);
+    }
+
+    public function returnsOnAVoidMethodAfterThen(): void
+    {
+        $gate = Understudy::for(Gate::class);
+
+        when(static function () use ($gate): void {
+            $gate->close();
+        })->throws(new \RuntimeException('closed'))->then()->returns(null);
+    }
 }

@@ -109,14 +109,14 @@ final class VerbNamesTest
      */
     public function everyCallClosureVerbOfTheCoreIsKnown(): void
     {
-        foreach (self::coreStaticVerbs() as $method) {
+        foreach ($this->coreStaticVerbs() as $method) {
             Assert::true(
                 VerbNames::isStaticCall(Understudy::class, $method),
                 sprintf('Understudy::%s() takes a call closure and is unknown to VerbNames', $method),
             );
         }
 
-        foreach (self::coreFunctionVerbs() as $function) {
+        foreach ($this->coreFunctionVerbs() as $function) {
             Assert::true(
                 VerbNames::isFunction($function),
                 sprintf('%s() takes a call closure and is unknown to VerbNames', $function),
@@ -136,7 +136,7 @@ final class VerbNamesTest
     {
         foreach (self::NOT_SPECIFICATIONS as $method) {
             Assert::true(
-                self::takesCallClosure(new \ReflectionMethod(Understudy::class, $method)),
+                $this->takesCallClosure(new \ReflectionMethod(Understudy::class, $method)),
                 sprintf('Understudy::%s() no longer takes a callable first — drop it from the list', $method),
             );
             Assert::false(VerbNames::isStaticCall(Understudy::class, $method));
@@ -149,7 +149,7 @@ final class VerbNamesTest
      *
      * @return list<string>
      */
-    private static function coreStaticVerbs(): array
+    private function coreStaticVerbs(): array
     {
         $verbs = [];
 
@@ -158,7 +158,7 @@ final class VerbNamesTest
                 continue;
             }
 
-            if (self::takesCallClosure($method)) {
+            if ($this->takesCallClosure($method)) {
                 $verbs[] = $method->getName();
             }
         }
@@ -172,7 +172,7 @@ final class VerbNamesTest
      *
      * @return list<string>
      */
-    private static function coreFunctionVerbs(): array
+    private function coreFunctionVerbs(): array
     {
         $verbs = [];
 
@@ -183,7 +183,7 @@ final class VerbNamesTest
 
             $reflection = new \ReflectionFunction($function);
 
-            if (self::takesCallClosure($reflection)) {
+            if ($this->takesCallClosure($reflection)) {
                 $verbs[] = $function;
             }
         }
@@ -196,7 +196,7 @@ final class VerbNamesTest
      * specification verb has, and the only one readable without knowing what
      * the verb means.
      */
-    private static function takesCallClosure(\ReflectionFunctionAbstract $function): bool
+    private function takesCallClosure(\ReflectionFunctionAbstract $function): bool
     {
         $first = $function->getParameters()[0] ?? null;
         $type = $first?->getType();
