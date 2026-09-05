@@ -70,10 +70,13 @@ project never names one.
   `verify(…, never: true, times: 3)`, `times` beside a `minimum`.
 - `understudy.matcher` — a matcher whose kind the parameter can never accept.
 - `understudy.returns` — `returns()` on a method declared `void`.
-- `understudy.matcherLeak` — a matcher written outside a specification, where
-  it reaches the code as a value. This one exists BECAUSE matchers are typed
-  `never`: without it the extension would be weaker than no extension for
-  that mistake.
+- `understudy.matcherLeak` — a matcher written outside a specification AND
+  outside any closure, where it reaches the code as a value. A matcher hoisted
+  into a variable, stored on a property, or written inside a closure handed to
+  a verb later is NOT one: the closure has not run, and the `when()` that runs
+  it is somewhere else entirely, so its file offsets never cover the matcher.
+  This one exists BECAUSE matchers are typed `never`: without it the extension
+  would be weaker than no extension for that mistake.
 
 Silence one with `ignoreErrors: - identifier: understudy.matcherLeak`.
 

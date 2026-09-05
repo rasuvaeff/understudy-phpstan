@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- **`->returns(...)->times(5, 2)` is reported as impossible again.** The
+  cardinality rule read only the immediate receiver of `times()`, so it fired
+  on `expect(...)->times(5, 2)` and stayed silent on every spelling with a link
+  in between — including the one the engine's own README recommends for a
+  repeated call.
+- **`times(maximum: 5, minimum: 1)` is no longer reported as impossible.** The
+  bounds were read positionally, so a named call with the arguments in the
+  other order looked like `(5, 1)`. Correct code turned red, with no way around
+  it but removing the extension.
+- **A specification that reaches its double through a helper is silent.**
+  `when(fn () => $this->gate()->find(1))`, `$double->find($this->id())` and
+  `$this->passThrough($double->find(1))` were all reported as "the closure
+  makes 2 calls". The engine throws on the first call that lands on a double
+  and never sees the rest, so a call that is the receiver of another, or one
+  made on `$this`, is not a second specified call. The total still answers "no
+  call at all", so a specification that reaches its double only through a
+  helper is not accused of specifying nothing either.
+- **`understudy.matcherLeak` no longer accuses a matcher that arrives
+  indirectly.** The rule compares file offsets against the textual range of the
+  `when()` call, so a matcher hoisted into a variable, stored on a property or
+  written inside a closure handed over later fell outside every range and was
+  called a leak. A matcher inside any closure is now left alone — the closure
+  has not run — and a matcher that is assigned rather than passed is nobody's
+  argument.
+- **`wire()` builds a shape for a `?Contract` parameter.** Null in the union
+  answered no class name, so no shape was built for the key and
+  `$wired['doubles']['clock']` stayed `object` — "Call to an undefined method
+  object::now()" on working code, against a docblock promising that `?Contract`
+  is the same double.
+- Includes the matcher-location and returned-call fixes merged after 0.4.1
+  (#23), which had not been released.
+
 ## 0.4.1 — 2026-09-04
 
 - **Documentation review fixes.** Requirements now lists the direct

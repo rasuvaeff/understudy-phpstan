@@ -132,7 +132,7 @@ green suite hides.
 | `understudy.cardinality` | `times(5, 2)`, a negative bound, `verify(…, never: true, times: 3)`, `times` beside a `minimum` |
 | `understudy.matcher` | A matcher whose kind the parameter can never accept: `Arg::int()` where a `string` is declared |
 | `understudy.returns` | `returns()` on a method declared `void`, where no value is ever observed |
-| `understudy.matcherLeak` | A matcher written outside a specification, where it reaches the code as a value |
+| `understudy.matcherLeak` | A matcher written outside a specification and outside a closure, where it reaches the code as a value. A matcher hoisted into a variable, stored on a property or written in a closure handed over later is not one: the closure has not run, and the specification that runs it is elsewhere |
 
 The rules are silent whenever they are not sure. A refined parameter type —
 `non-empty-string`, an int range — answers "maybe" to its plain kind, and a

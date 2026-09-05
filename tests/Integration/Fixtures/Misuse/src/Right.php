@@ -58,4 +58,69 @@ final class Right
             static fn(): bool => (new \ArrayObject([]))->count() === 0,
         );
     }
+
+    /**
+     * Named bounds in either order. Read positionally, `times(maximum: 5,
+     * minimum: 1)` says `(5, 1)` and correct code was reported as impossible
+     * -- which costs more than a missed report, because a user cannot work
+     * around it.
+     */
+    public function namedBoundsInEitherOrder(): void
+    {
+        $gate = Understudy::for(Gate::class);
+
+        expect(static fn(): bool => $gate->open(1))->times(maximum: 5, minimum: 1);
+        expect(static fn(): bool => $gate->open(2))->times(minimum: 1, maximum: 5);
+        expect(static fn(): bool => $gate->open(3))->returns(true)->times(maximum: 5, minimum: 1);
+    }
+
+    /**
+     * One of the calls written here can reach a double; the others are the
+     * test class's own helpers, or the receiver of the call that does.
+     */
+    public function oneCallOnADoubleAmongSeveralWritten(): void
+    {
+        $gate = Understudy::for(Gate::class);
+
+        when(fn(): bool => $gate->open($this->identifier()));
+        when(fn(): bool => $this->passThrough($gate->open(2)));
+        when(fn(): bool => $this->gate()->open(3));
+    }
+
+    /**
+     * A matcher that reaches its specification other than by being written
+     * inside it: hoisted into a variable, stored on the object, handed over
+     * as a `callable`. All of these work, and the leak rule used to call each
+     * of them a matcher in a real call.
+     */
+    public function matchersThatArriveIndirectly(): void
+    {
+        $gate = Understudy::for(Gate::class);
+        $any = Arg::any();
+        $specification = static fn(): bool => $gate->open(Arg::int());
+
+        when(static fn(): bool => $gate->open($any));
+        when($specification);
+        when($this->specificationFor($gate));
+    }
+
+    private function identifier(): int
+    {
+        return 1;
+    }
+
+    private function passThrough(bool $value): bool
+    {
+        return $value;
+    }
+
+    private function gate(): Gate
+    {
+        return Understudy::for(Gate::class);
+    }
+
+    private function specificationFor(Gate $gate): \Closure
+    {
+        return static fn(): bool => $gate->open(Arg::int());
+    }
 }

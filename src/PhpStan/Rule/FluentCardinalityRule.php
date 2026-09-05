@@ -7,6 +7,7 @@ namespace Rasuvaeff\Understudy\PhpStan\Rule;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
 use PhpParser\Node\Expr\MethodCall;
+use PhpParser\Node\Expr\NullsafeMethodCall;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Scalar\Int_;
 use PHPStan\Analyser\Scope;
@@ -41,15 +42,12 @@ final class FluentCardinalityRule implements Rule
             return [];
         }
 
-        if (SpecificationExpr::verbOf($node->var) === null) {
+        if (!$this->isSpecificationChain($node->var)) {
             return [];
         }
 
-        $arguments = array_values($node->getArgs());
-        $problem = Cardinality::timesProblem(
-            $this->literalInt($arguments[0] ?? null),
-            $this->literalInt($arguments[1] ?? null),
-        );
+        [$minimum, $maximum] = $this->timesBounds($node);
+        $problem = Cardinality::timesProblem($minimum, $maximum);
 
         if ($problem === null) {
             return [];
@@ -61,6 +59,63 @@ final class FluentCardinalityRule implements Rule
                 ->line($node->getStartLine())
                 ->build(),
         ];
+    }
+
+    /**
+     * Whether `->times()` sits anywhere on a specification chain, not only
+     * directly on the verb.
+     *
+     * `expect(...)->returns('b')->times(5, 2)` is the spelling the engine's own
+     * README recommends for a repeated call, and reading only the immediate
+     * receiver found a `MethodCall` there and gave up — so of the four
+     * spellings people write, the rule fired on one.
+     */
+    private function isSpecificationChain(Node\Expr $expression): bool
+    {
+        while ($expression instanceof MethodCall || $expression instanceof NullsafeMethodCall) {
+            $expression = $expression->var;
+        }
+
+        return SpecificationExpr::verbOf($expression) !== null;
+    }
+
+    /**
+     * The bounds of `times()`, by name where the call names them.
+     *
+     * `times(maximum: 5, minimum: 1)` is valid and means one to five calls;
+     * read positionally it says `(5, 1)` and correct code was reported as
+     * impossible — which costs more than the missed report above, because a
+     * user cannot work around it.
+     *
+     * @return array{0: ?int, 1: ?int}
+     */
+    private function timesBounds(MethodCall $call): array
+    {
+        $minimum = null;
+        $maximum = null;
+        $position = 0;
+
+        foreach ($call->getArgs() as $argument) {
+            if ($argument->name instanceof Identifier) {
+                match (strtolower($argument->name->toString())) {
+                    'minimum' => $minimum = $this->literalInt($argument),
+                    'maximum' => $maximum = $this->literalInt($argument),
+                    default => null,
+                };
+
+                continue;
+            }
+
+            match ($position) {
+                0 => $minimum = $this->literalInt($argument),
+                1 => $maximum = $this->literalInt($argument),
+                default => null,
+            };
+
+            ++$position;
+        }
+
+        return [$minimum, $maximum];
     }
 
     private function literalInt(?Arg $argument): ?int

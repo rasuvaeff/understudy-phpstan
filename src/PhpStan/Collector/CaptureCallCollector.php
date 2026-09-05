@@ -39,6 +39,16 @@ final class CaptureCallCollector implements Collector
             return null;
         }
 
+        // A matcher written inside a closure has not reached anything yet:
+        // the body runs when somebody calls it, and if that somebody is the
+        // engine the closure IS the specification. A specification hoisted
+        // into a variable, returned from a helper or handed over as a
+        // `callable` never falls inside the textual range of the `when()`
+        // that runs it, and calling that a leak reported working code.
+        if ($scope->isInAnonymousFunction()) {
+            return null;
+        }
+
         if (!(new ObjectType(Captor::class))->isSuperTypeOf($scope->getType($node->var))->yes()) {
             return null;
         }

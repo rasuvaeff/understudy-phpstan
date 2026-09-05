@@ -34,4 +34,18 @@ final class Right
         when(static fn(): ?string => $books->find(1))->returns('Dune');
         when(static fn(): bool => $books->audit())->returns(true);
     }
+
+    /**
+     * `?Contract` is the same double: the core builds one rather than passing
+     * null wherever it can, and the docblock of `WireShape::contractType()`
+     * has always said so. Null in the union answered no class name, so the
+     * key stayed `object` and the call below was "an undefined method".
+     */
+    public function aNullableParameterIsStillADouble(): void
+    {
+        $wired = Understudy::wire(Optional::class);
+
+        $clock = $wired['doubles']['clock'];
+        when(static fn(): int => $clock->now())->returns(7);
+    }
 }
