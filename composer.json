@@ -2,7 +2,7 @@
     "name": "rasuvaeff/understudy-phpstan",
     "description": "PHPStan extension for the understudy test double library: matcher-aware specification closures and misuse rules",
     "license": "BSD-3-Clause",
-    "type": "library",
+    "type": "phpstan-extension",
     "keywords": [
         "testing",
         "phpstan",
