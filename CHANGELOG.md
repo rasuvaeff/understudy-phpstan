@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- deps: `vimeo/psalm` `^6.16` → `^7.2`. Psalm 7 cannot resolve the two linked
+  templates of `CollectedDataNode::get()` (it substitutes `TCollector` into the
+  `Collector<Node, TValue>` constraint), so `MatcherLeakRule` reads its
+  collectors through a private generic bridge whose own signature carries the
+  shape.
+
 ## 1.0.1 — 2026-09-27
 
 - Package `type` changed to `phpstan-extension`. `phpstan/extension-installer` only registers packages of that type, so the README's "with extension-installer that is all" was previously untrue — the extension had to be included by hand. It now loads automatically, and the package is discoverable on Packagist (`type=phpstan-extension`).

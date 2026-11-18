@@ -6,6 +6,7 @@ namespace Rasuvaeff\Understudy\PhpStan\Rule;
 
 use PhpParser\Node;
 use PHPStan\Analyser\Scope;
+use PHPStan\Collectors\Collector;
 use PHPStan\Node\CollectedDataNode;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
@@ -49,20 +50,20 @@ final class MatcherLeakRule implements Rule
         // through a template psalm cannot follow across the class-string, so
         // the shape is restated here rather than inferred.
         /** @var array<string, list<array{int, int}>> $specifications */
-        $specifications = $node->get(SpecificationRangeCollector::class);
+        $specifications = $this->collected($node, SpecificationRangeCollector::class);
 
         /** @var array<string, list<array{int, int, string}>> $matchersByFile */
-        $matchersByFile = $node->get(MatcherCallCollector::class);
+        $matchersByFile = $this->collected($node, MatcherCallCollector::class);
 
         /** @var array<string, list<array{int, int}>> $capturesByFile */
-        $capturesByFile = $node->get(CaptureCallCollector::class);
+        $capturesByFile = $this->collected($node, CaptureCallCollector::class);
 
         // A matcher that is stored rather than passed is nobody's argument.
         // Its range joins the specification ranges, because the question this
         // rule asks — "did this matcher reach a real call?" — is answered no
         // for it in the same way.
         /** @var array<string, list<array{int, int}>> $hoistedByFile */
-        $hoistedByFile = $node->get(HoistedMatcherCollector::class);
+        $hoistedByFile = $this->collected($node, HoistedMatcherCollector::class);
 
         foreach ($hoistedByFile as $file => $ranges) {
             $specifications[$file] = array_merge($specifications[$file] ?? [], $ranges);
@@ -112,6 +113,21 @@ final class MatcherLeakRule implements Rule
         }
 
         return $errors;
+    }
+
+    /**
+     * Psalm 7 cannot resolve the two linked templates of
+     * `CollectedDataNode::get()` — it substitutes `TCollector` into the
+     * `Collector<Node, TValue>` constraint — so the shape travels through
+     * this bridge's own signature instead.
+     *
+     * @template TValue
+     * @param class-string<Collector<Node, TValue>> $collector
+     * @return array<string, list<TValue>>
+     */
+    private function collected(CollectedDataNode $node, string $collector): array
+    {
+        return $node->get($collector);
     }
 
     /**
