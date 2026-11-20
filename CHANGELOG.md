@@ -24,7 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   can implement it.
 - **Fixed.** `Arg::captor()` was typed `never` along with the matchers, so the
   captor and everything read off it (`last()`, `all()`) lost their type. It
-  now keeps `Captor<Foo>`; only `capture()` is a matcher.
+  now keeps `Captor<Foo>`; only `capture()` is a matcher. At high levels a
+  test reading `$captor->last()` may now see its real `Foo|null` type and the
+  reports that come with it.
 - **Fixed.** `when(fn () => $double->method(...))` — a first-class callable in
   a specification closure — was counted as the specified call. It is now
   reported as `understudy.closure` (the closure makes no call), which is what
