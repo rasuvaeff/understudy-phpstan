@@ -125,10 +125,11 @@ final class ExtensionIntegrationTest
     {
         $report = $this->analyse('Misuse');
 
-        // Fifteen mistakes, fifteen reports, all of them ours. The last
-        // five are impossible bounds written past the first link of the
-        // chain, which the rule used to walk straight past.
-        Assert::same($this->countIn($report, 'Wrong.php'), 15);
+        // Sixteen mistakes, sixteen reports, all of them ours. Five are
+        // impossible bounds written past the first link of the chain, which
+        // the rule used to walk straight past; the last is a first-class
+        // callable, which this extension used to count as the call.
+        Assert::same($this->countIn($report, 'Wrong.php'), 16);
         Assert::same(
             array_values(array_unique(array_map(
                 static fn(string $identifier): string => explode('.', $identifier)[0],
@@ -154,7 +155,7 @@ final class ExtensionIntegrationTest
     {
         $report = $this->analyse('Misuse', 'phpstan-level-0.neon');
 
-        Assert::same($this->countIn($report, 'Wrong.php'), 15);
+        Assert::same($this->countIn($report, 'Wrong.php'), 16);
         Assert::same($this->countIn($report, 'Right.php'), 0);
     }
 
@@ -162,21 +163,65 @@ final class ExtensionIntegrationTest
     {
         $report = $this->analyse('Returns');
 
-        // Five of the eight are not our own rules at all: filling in the
+        // Seven of the ten are not our own rules at all: filling in the
         // builder's template parameter is all the extension does there, and
         // PHPStan checks `returns()` and `answers()` against it on its own.
         // The other three are the one the parameter cannot carry — a void
         // method, whose `WhenBuilder<void>` nobody could satisfy — written
         // directly on the verb and past a `times()` and a `then()` link,
-        // which the rule used to walk straight past.
-        Assert::same($this->countIn($report, 'Wrong.php'), 8);
+        // which the rule used to walk straight past. A non-numeric string on
+        // `: int` and `true` on `: false` are among the seven: definite
+        // mismatches the parameter already carries, at every level that
+        // checks argument types, so no rule of ours repeats them.
+        Assert::same($this->countIn($report, 'Wrong.php'), 10);
         Assert::same(
             array_count_values($this->identifiersIn($report, 'Wrong.php')),
-            ['argument.type' => 5, 'understudy.returns' => 3],
+            ['argument.type' => 7, 'understudy.returns' => 3],
         );
 
         // Answers that fit, and the shapes the extension declines to judge.
         Assert::same($this->countIn($report, 'Right.php'), 0);
+    }
+
+    /**
+     * Matchers that name what they match — in their own name (`which`,
+     * `containing`, `count`) or in their argument (`instanceOf(Foo::class)`,
+     * a `Captor<Foo>`) — against a parameter no such value can reach.
+     *
+     * The same fixture, and the same eight reports, as the Psalm plugin's:
+     * the decision table is shared, and PHPStan's own knowledge of finality
+     * is deliberately not used — a double of a final class can implement an
+     * interface the class does not. The control group is the point: an
+     * interface on either side, a subclass, a class not written out, an
+     * object against `count()`, each a maybe and each silent.
+     */
+    public function aMatcherOfTheWrongShapeIsReported(): void
+    {
+        $report = $this->analyse('Kinds');
+
+        Assert::same($this->identifiersIn($report, 'Wrong.php'), array_fill(0, 8, 'understudy.matcher'));
+        Assert::same($this->countIn($report, 'Right.php'), 0);
+    }
+
+    /**
+     * `Understudy::for(A::class, B::class)` is typed `A&B`, so the methods of
+     * the second contract exist and are specified like any other. The
+     * control run is what shows the difference: without the extension they
+     * are undefined methods.
+     */
+    public function aDoubleOfTwoContractsHasTheMethodsOfBoth(): void
+    {
+        $report = $this->analyse('Targets');
+
+        Assert::same(
+            $this->identifiersIn($report, 'Wrong.php'),
+            ['understudy.matcher', 'argument.type', 'understudy.matcher', 'argument.type'],
+        );
+        Assert::same($this->countIn($report, 'Right.php'), 0);
+
+        $control = $this->identifiersIn($this->analyse('Targets', 'phpstan-without-extension.neon'), 'Right.php');
+
+        Assert::true(\in_array('method.notFound', $control, strict: true));
     }
 
     public function theWireShapeIsReadFromTheConstructor(): void

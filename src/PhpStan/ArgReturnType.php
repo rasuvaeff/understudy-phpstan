@@ -48,7 +48,12 @@ final class ArgReturnType implements DynamicStaticMethodReturnTypeExtension
     #[\Override]
     public function isStaticMethodSupported(MethodReflection $methodReflection): bool
     {
-        return true;
+        // `captor()` is not a matcher: it hands back the `Captor` a test
+        // reads after the run, typed by its class. Typed `never`, the captor
+        // and everything read off it — `last()`, `all()`, the class of its
+        // `capture()` — was lost. Its matcher is `capture()`, which
+        // `CaptorReturnType` types instead.
+        return strtolower($methodReflection->getName()) !== 'captor';
     }
 
     #[\Override]

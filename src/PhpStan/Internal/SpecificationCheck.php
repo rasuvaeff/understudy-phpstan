@@ -7,15 +7,20 @@ namespace Rasuvaeff\Understudy\PhpStan\Internal;
 use PhpParser\Node\Arg;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\ArrowFunction;
+use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\Closure;
-use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Identifier;
-use PhpParser\Node\Scalar\Int_;
+use PhpParser\Node\Name;
 use PHPStan\Analyser\Scope;
+use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\RuleErrorBuilder;
+use PHPStan\Type\ObjectType;
+use PHPStan\Type\Type;
+use Rasuvaeff\Understudy\Captor;
 
 /**
  * Says what the engine would say, before the test runs.
@@ -47,8 +52,12 @@ final class SpecificationCheck
      *
      * @return list<IdentifierRuleError>
      */
-    public static function errors(FuncCall|StaticCall $call, string $verb, Scope $scope): array
-    {
+    public static function errors(
+        FuncCall|StaticCall $call,
+        string $verb,
+        Scope $scope,
+        ReflectionProvider $reflection,
+    ): array {
         $arguments = array_values($call->getArgs());
 
         // Every closure argument, not the first one: `verifySequence()` takes
@@ -75,7 +84,7 @@ final class SpecificationCheck
         }
 
         if ($verb === 'verify') {
-            $problem = Cardinality::verifyProblem(self::namedLiterals($arguments));
+            $problem = Cardinality::verifyProblem(Cardinality::namedLiterals($arguments));
 
             if ($problem !== null) {
                 $errors[] = self::error($problem, self::CARDINALITY_IDENTIFIER, $call->getStartLine());
@@ -83,7 +92,7 @@ final class SpecificationCheck
         }
 
         foreach ($closures as $closure) {
-            foreach (self::matcherErrors($closure, $scope) as $error) {
+            foreach (self::matcherErrors($closure, $scope, $reflection) as $error) {
                 $errors[] = $error;
             }
         }
@@ -96,11 +105,11 @@ final class SpecificationCheck
      *
      * @return list<IdentifierRuleError>
      */
-    private static function matcherErrors(Expr $closure, Scope $scope): array
+    private static function matcherErrors(Expr $closure, Scope $scope, ReflectionProvider $reflection): array
     {
         $specified = SpecifiedCall::of($closure, $scope);
 
-        if (!$specified instanceof \Rasuvaeff\Understudy\PhpStan\Internal\SpecifiedCall) {
+        if (!$specified instanceof SpecifiedCall) {
             return [];
         }
 
@@ -108,14 +117,13 @@ final class SpecificationCheck
         $errors = [];
 
         foreach (array_values($specified->call->getArgs()) as $position => $argument) {
-            $matcher = MatcherName::of($argument->value);
             $parameter = $parameters[$position] ?? null;
 
-            if ($matcher === null || $parameter === null) {
+            if ($parameter === null) {
                 continue;
             }
 
-            $problem = MatcherKind::problem($matcher, $parameter->getType());
+            $problem = self::matcherProblem($argument->value, $parameter->getType(), $scope, $reflection);
 
             if ($problem !== null) {
                 $errors[] = self::error(
@@ -129,33 +137,113 @@ final class SpecificationCheck
         return $errors;
     }
 
-    /**
-     * @param list<Arg> $arguments
-     *
-     * @return array<string, int|bool|null>
-     */
-    private static function namedLiterals(array $arguments): array
-    {
-        $literals = [];
+    private static function matcherProblem(
+        Expr $argument,
+        Type $parameter,
+        Scope $scope,
+        ReflectionProvider $reflection,
+    ): ?string {
+        $unrelated = static fn(string $one, string $other): bool => self::unrelatedClasses($reflection, $one, $other);
 
-        foreach ($arguments as $argument) {
-            if (!$argument->name instanceof Identifier) {
-                continue;
-            }
+        $captured = self::capturedClass($argument, $scope);
 
-            $value = $argument->value;
-            $literals[$argument->name->toString()] = match (true) {
-                $value instanceof Int_ => $value->value,
-                $value instanceof ConstFetch => match (strtolower($value->name->toString())) {
-                    'true' => true,
-                    'false' => false,
-                    default => null,
-                },
-                default => null,
-            };
+        if ($captured !== null) {
+            return MatcherKind::instanceProblem('`capture()`', $captured, $parameter, $unrelated);
         }
 
-        return $literals;
+        $matcher = MatcherName::of($argument);
+
+        if ($matcher === null || !$argument instanceof StaticCall) {
+            return null;
+        }
+
+        if (strtolower($matcher) !== 'instanceof') {
+            return MatcherKind::problem($matcher, $parameter);
+        }
+
+        $class = self::literalClass($argument->getArgs()[0]->value ?? null);
+
+        return $class === null
+            ? null
+            : MatcherKind::instanceProblem('`Arg::' . $matcher . '()`', $class, $parameter, $unrelated);
+    }
+
+    /**
+     * The class a captor's `capture()` holds instances of, read off the
+     * receiver's resolved type: our `Captor` with a class for its template.
+     * A namesake `capture()` or an untyped captor answers null.
+     *
+     * @return non-empty-string|null
+     */
+    private static function capturedClass(Expr $argument, Scope $scope): ?string
+    {
+        if (!$argument instanceof MethodCall
+            || !$argument->name instanceof Identifier
+            || $argument->name->toLowerString() !== 'capture'
+            || $argument->getArgs() !== []
+        ) {
+            return null;
+        }
+
+        $receiver = $scope->getType($argument->var);
+
+        if ($receiver->getObjectClassNames() !== [Captor::class]) {
+            return null;
+        }
+
+        $held = $receiver->getTemplateType(Captor::class, 'T');
+
+        if (!$held instanceof ObjectType) {
+            return null;
+        }
+
+        $class = $held->getClassName();
+
+        return $class === '' ? null : $class;
+    }
+
+    /**
+     * `Foo::class`, written out — the one spelling whose class is known
+     * without guessing. `self::class`, `static::class` and a variable are
+     * left alone.
+     *
+     * @return non-empty-string|null
+     */
+    private static function literalClass(?Expr $expression): ?string
+    {
+        if (!$expression instanceof ClassConstFetch
+            || !$expression->class instanceof Name
+            || !$expression->name instanceof Identifier
+            || $expression->name->toLowerString() !== 'class'
+            || $expression->class->isSpecialClassName()
+        ) {
+            return null;
+        }
+
+        $class = ltrim(ResolvedName::of($expression->class), '\\');
+
+        return $class === '' ? null : $class;
+    }
+
+    /**
+     * Two classes neither of which extends the other — no object is an
+     * instance of both. An interface, a trait or a name PHPStan does not know
+     * is never unrelated: the answer there is a maybe.
+     */
+    private static function unrelatedClasses(ReflectionProvider $reflection, string $one, string $other): bool
+    {
+        if (strtolower($one) === strtolower($other) || !$reflection->hasClass($one) || !$reflection->hasClass($other)) {
+            return false;
+        }
+
+        $first = $reflection->getClass($one);
+        $second = $reflection->getClass($other);
+
+        if ($first->isInterface() || $first->isTrait() || $second->isInterface() || $second->isTrait()) {
+            return false;
+        }
+
+        return !$first->isSubclassOfClass($second) && !$second->isSubclassOfClass($first);
     }
 
     /**

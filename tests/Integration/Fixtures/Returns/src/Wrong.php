@@ -61,6 +61,26 @@ final class Wrong
         })->returns(null);
     }
 
+    /**
+     * A string where an int is declared, and the wrong literal of a literal
+     * type. The builder's template parameter carries both, so the analyser
+     * reports them on its own wherever it checks argument types — no rule of
+     * ours is needed, and one would only say it twice.
+     */
+    public function aNonNumericStringWhereAnIntIsDeclared(): void
+    {
+        $gate = Understudy::for(Gate::class);
+
+        when(static fn(): int => $gate->count())->returns('abc');
+    }
+
+    public function trueWhereOnlyFalseIsDeclared(): void
+    {
+        $gate = Understudy::for(Gate::class);
+
+        when(static fn(): bool => $gate->closed())->returns(true);
+    }
+
     public function theStaticFormIsCheckedToo(): void
     {
         $gate = Understudy::for(Gate::class);
