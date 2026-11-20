@@ -75,19 +75,15 @@ final readonly class WireShape
         $parameters = $variants[0]->getParameters();
 
         foreach ($parameters as $parameter) {
-            if ($parameter->isVariadic()) {
-                // `Wire` stops at a variadic tail: it is optional by
-                // definition, and inventing entries for it would invent
-                // collaborators. There is never a key for it.
-                continue;
-            }
-
             $name = $parameter->getName();
 
-            if (isset($overrides['definite'][$name])) {
+            if (isset($overrides['definite'][$name]) || $parameter->isVariadic()) {
                 // The test handed the value in, and `Wire` takes it before
                 // looking at the type: no double, and no refusal of a union
-                // either.
+                // either. A variadic tail is never doubled — it is optional
+                // by definition, and inventing entries for it would invent
+                // collaborators. Either way there is never a key, and that is
+                // worth an exact shape even when nothing else is doubled.
                 $found = true;
 
                 continue;

@@ -258,7 +258,10 @@ final class ExtensionIntegrationTest
 
         // A literal override, and a variadic tail: the key does not exist.
         Assert::same($missing($messages, "Offset 'clock' does not exist on array{books:"), 1);
-        Assert::same($missing($messages, "Offset 'auditors' does not exist"), 1);
+        Assert::same($missing($messages, "Offset 'auditors' does not exist on array{clock:"), 1);
+        // Nothing but a variadic tail: an exact empty shape, not the core's
+        // `array<string, object>` where any key passes.
+        Assert::same($missing($messages, "Offset 'auditors' does not exist on array{}"), 1);
         // Overrides whose keys are unknown, and a final class with a default:
         // the key may be missing.
         Assert::same($missing($messages, "Offset 'books' might not exist"), 1);
