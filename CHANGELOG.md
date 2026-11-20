@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.1.0 — 2026-11-20
+
+- **Added.** `Understudy::for(A::class, B::class)` is typed `A&B` when every
+  argument is a written-out `::class` and every one after the first an
+  interface (#51). The methods of `B` exist on the double, and a
+  specification of one of them gets its builder type and matcher checks like
+  any other.
+- **Added.** `understudy.matcher` knows more matcher kinds (#52):
+  `Arg::containing()` against a parameter that cannot be an array,
+  `Arg::count()` against one that holds neither an array nor an object,
+  `Arg::which()` against one that holds no object, and
+  `Arg::instanceOf(Foo::class)` (written out) and a `Captor<Foo>`'s
+  `capture()` against a parameter that holds no object or only objects of a
+  class unrelated to `Foo`. Same "only a definite no" rule, and the same
+  decision table as the Psalm plugin: an interface on either side is never
+  judged, not even against a final class, because a double of a final class
+  can implement it.
+- **Fixed.** `Arg::captor()` was typed `never` along with the matchers, so the
+  captor and everything read off it (`last()`, `all()`) lost their type. It
+  now keeps `Captor<Foo>`; only `capture()` is a matcher.
+- **Fixed.** `when(fn () => $double->method(...))` — a first-class callable in
+  a specification closure — was counted as the specified call. It is now
+  reported as `understudy.closure` (the closure makes no call), which is what
+  the engine says at runtime, and its arguments are no longer read (which
+  threw for `$captor->capture(...)`).
+- **Internal.** The analyser-independent code (`Cardinality`, `ClosureShape`,
+  `VerbNames`) is token-identical to the Psalm plugin's copy and guarded by a
+  fingerprint test present in both repositories. `namedLiterals()` moved into
+  `Cardinality` and the single-call extractor into `ClosureShape`.
+
 ## 1.0.2 — 2026-11-20
 
 - **Fixed.** The `wire()` shape no longer types keys the core never puts in

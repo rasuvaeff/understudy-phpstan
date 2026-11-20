@@ -30,6 +30,7 @@
         "PHPStan\\Type\\StringType",
         "PHPStan\\Type\\Type",
         "PHPStan\\Type\\TypeCombinator",
+        "PHPStan\\Type\\UnionType",
         "PHPStan\\Type\\VerbosityLevel",
         "PHPStan\\Type\\VoidType"
     ],

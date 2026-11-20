@@ -40,7 +40,10 @@ project never names one.
   typed `never` when the receiver is a `Captor` (a foreign `capture()` is
   left alone), not counted against "exactly one call per closure", and
   reported by `understudy.matcherLeak` in a real call. `Arg::captor()` itself
-  is a factory, not a matcher, and lives outside the closure.
+  is a factory, not a matcher, and lives outside the closure; it keeps its
+  type `Captor<Foo>`.
+- `Understudy::for(A::class, B::class)` is typed `A&B` (every argument a
+  written-out `::class`, every one after the first an interface).
 - The matcher's own kind is NOT encoded in that type on purpose. Typing
   `Arg::string()` as `string` would make a `non-empty-string` parameter an
   error, and a matcher can match a non-empty string. Impossible pairings are
@@ -71,7 +74,11 @@ project never names one.
   call, or calls a static method a double cannot intercept.
 - `understudy.cardinality` — `times(5, 2)`, a negative bound,
   `verify(…, never: true, times: 3)`, `times` beside a `minimum`.
-- `understudy.matcher` — a matcher whose kind the parameter can never accept.
+- `understudy.matcher` — a matcher whose kind the parameter can never accept:
+  `int`/`float`/`string`/`bool` by kind; `containing()` needs an array,
+  `count()` an array or an object, `which()` an object;
+  `instanceOf(Foo::class)` written out and a `Captor<Foo>`'s `capture()` need
+  an object not of a class unrelated to `Foo`. Interfaces are never judged.
 - `understudy.returns` — `returns()` on a method declared `void`.
 - `understudy.matcherLeak` — a matcher written outside a specification AND
   outside any closure, where it reaches the code as a value. A matcher hoisted

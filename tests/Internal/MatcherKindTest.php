@@ -7,13 +7,16 @@ namespace Rasuvaeff\Understudy\PhpStan\Tests\Internal;
 use PHPStan\Type\Accessory\AccessoryNonEmptyStringType;
 use PHPStan\Type\ArrayType;
 use PHPStan\Type\BooleanType;
+use PHPStan\Type\CallableType;
 use PHPStan\Type\Constant\ConstantStringType;
 use PHPStan\Type\FloatType;
 use PHPStan\Type\IntegerRangeType;
 use PHPStan\Type\IntegerType;
 use PHPStan\Type\IntersectionType;
+use PHPStan\Type\IterableType;
 use PHPStan\Type\MixedType;
 use PHPStan\Type\ObjectType;
+use PHPStan\Type\ObjectWithoutClassType;
 use PHPStan\Type\StringType;
 use PHPStan\Type\Type;
 use PHPStan\Type\TypeCombinator;
@@ -80,6 +83,22 @@ final class MatcherKindTest
         yield 'same into int' => ['same', new IntegerType(), false];
         yield 'instanceOf into an object' => ['instanceOf', new ObjectType(\ArrayObject::class), false];
 
+        // `containing()` asks `is_array()`; `count()` takes an array or a
+        // Countable, and every object is a maybe; `which()` needs an object.
+        // The same table the Psalm plugin reads.
+        yield 'containing into an array' => ['containing', new ArrayType(new IntegerType(), new StringType()), false];
+        yield 'containing into an iterable' => ['containing', new IterableType(new MixedType(), new MixedType()), false];
+        yield 'containing into a callable' => ['containing', new CallableType(), false];
+        yield 'containing into mixed' => ['containing', new MixedType(), false];
+        yield 'count into an array' => ['count', new ArrayType(new IntegerType(), new StringType()), false];
+        yield 'count into an object' => ['count', new ObjectType(\ArrayObject::class), false];
+        yield 'count into a bare object' => ['count', new ObjectWithoutClassType(), false];
+        yield 'count into a callable' => ['count', new CallableType(), false];
+        yield 'which into an object' => ['which', new ObjectType(\ArrayObject::class), false];
+        yield 'which into a callable' => ['which', new CallableType(), false];
+        yield 'which into an iterable' => ['which', new IterableType(new MixedType(), new MixedType()), false];
+        yield 'which into a nullable object' => ['which', TypeCombinator::addNull(new ObjectWithoutClassType()), false];
+
         // The pairings no argument can satisfy.
         yield 'int into string' => ['int', new StringType(), true];
         yield 'string into int' => ['string', new IntegerType(), true];
@@ -87,6 +106,79 @@ final class MatcherKindTest
         yield 'float into string' => ['float', new StringType(), true];
         yield 'string into an array' => ['string', new ArrayType(new IntegerType(), new StringType()), true];
         yield 'float into int' => ['float', new IntegerType(), true];
+        yield 'containing into int' => ['containing', new IntegerType(), true];
+        yield 'containing into a bare object' => ['containing', new ObjectWithoutClassType(), true];
+        yield 'count into string' => ['count', new StringType(), true];
+        yield 'count into a nullable int' => ['count', TypeCombinator::addNull(new IntegerType()), true];
+        yield 'which into string' => ['which', new StringType(), true];
+        yield 'which into an array' => ['which', new ArrayType(new IntegerType(), new StringType()), true];
+    }
+
+    #[DataProvider('instanceProvider')]
+    public function holdsAnInstanceOnlyWhereOneCanBe(Type $parameter, bool $unrelated, bool $reported): void
+    {
+        $asked = [];
+        $problem = MatcherKind::instanceProblem(
+            '`Arg::instanceOf()`',
+            'Fixture\\Pen',
+            $parameter,
+            static function (string $one, string $other) use ($unrelated, &$asked): bool {
+                $asked[] = $one;
+
+                return $unrelated;
+            },
+        );
+
+        Assert::same($problem !== null, $reported);
+
+        foreach ($asked as $class) {
+            Assert::same($class, 'Fixture\\Pen');
+        }
+    }
+
+    /**
+     * Reported pairings are object-free: describing an object type needs a
+     * running analysis (see below), so an unrelated class is reported in
+     * the `Kinds` fixture instead.
+     */
+    public static function instanceProvider(): iterable
+    {
+        yield 'into int' => [new IntegerType(), false, true];
+        yield 'into a nullable string' => [TypeCombinator::addNull(new StringType()), false, true];
+        yield 'into an array' => [new ArrayType(new IntegerType(), new StringType()), false, true];
+        yield 'into a related class' => [new ObjectType(\ArrayObject::class), false, false];
+        yield 'into a bare object' => [new ObjectWithoutClassType(), true, false];
+        yield 'into a callable' => [new CallableType(), true, false];
+        yield 'into an iterable' => [new IterableType(new MixedType(), new MixedType()), true, false];
+        yield 'into mixed' => [new MixedType(), true, false];
+        yield 'into an intersection' => [
+            new IntersectionType([new ObjectType(\ArrayObject::class), new ObjectType(\Countable::class)]),
+            true,
+            false,
+        ];
+    }
+
+    public function theInstanceComplaintNamesTheClass(): void
+    {
+        Assert::same(
+            MatcherKind::instanceProblem(
+                '`capture()`',
+                'Fixture\\Pen',
+                TypeCombinator::addNull(new IntegerType()),
+                static fn(string $one, string $other): bool => true,
+            ),
+            '`capture()` matches a value of type Fixture\\Pen, and this parameter accepts int|null. '
+            . 'No argument can satisfy both, so the specification can never match.',
+        );
+    }
+
+    public function theShapeIsNamedByWhatItMatches(): void
+    {
+        Assert::same(
+            MatcherKind::problem('count', new StringType()),
+            '`Arg::count()` matches a value of type array|Countable, and this parameter accepts string. '
+            . 'No argument can satisfy both, so the specification can never match.',
+        );
     }
 
     /**

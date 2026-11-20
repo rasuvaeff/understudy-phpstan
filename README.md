@@ -88,7 +88,8 @@ Two more idioms are covered the same way:
   what decides — a foreign `capture()` is left alone), not counted against
   "exactly one call per closure", and reported by `understudy.matcherLeak`
   when it reaches a real call. `Arg::captor()` itself is a factory, not a
-  matcher, and legitimately lives outside the closure.
+  matcher, and legitimately lives outside the closure — it keeps its own type,
+  `Captor<Foo>`, so `last()` and `all()` are typed by the class.
 
 ### 2. `returns()` is checked against the method being specified
 
@@ -100,6 +101,16 @@ the template parameter in, and PHPStan does the rest:
 when(fn () => $gate->open(1))->returns('yes');
 // Parameter #1 ...$values of method WhenBuilder<bool>::returns() expects bool, string given.
 ```
+
+`returns('abc')` on `: int` and `returns(true)` on `: false` are the same
+report. PHPStan checks argument types from level 5, so below it these pass.
+
+### 2a. A double of two contracts has the methods of both
+
+`Understudy::for(A::class, B::class)` is typed `A&B` when every argument is a
+written-out `::class` and every one after the first an interface. The methods
+of `B` exist on the double, and a specification of one of them is checked like
+any other.
 
 ### 3. `wire()` has the shape of the class it wired
 
@@ -138,7 +149,7 @@ green suite hides.
 |---|---|
 | `understudy.closure` | The closure specifies nothing, makes more than one call, or calls a static method a double cannot intercept |
 | `understudy.cardinality` | `times(5, 2)`, a negative bound, `verify(…, never: true, times: 3)`, `times` beside a `minimum` |
-| `understudy.matcher` | A matcher whose kind the parameter can never accept: `Arg::int()` where a `string` is declared |
+| `understudy.matcher` | A matcher whose kind the parameter can never accept: `Arg::int()` where a `string` is declared; `containing()` against anything that cannot be an array; `count()` against a parameter that holds neither an array nor an object; `which()` against one that holds no object; `instanceOf(Foo::class)` (written out) and a `Captor<Foo>`'s `capture()` against a parameter that holds no object, or only objects of a class unrelated to `Foo`. An interface on either side is never judged — not even against a final class, because a double of a final class can implement it |
 | `understudy.returns` | `returns()` on a method declared `void`, where no value is ever observed |
 | `understudy.matcherLeak` | A matcher written outside a specification and outside a closure, where it reaches the code as a value. A matcher hoisted into a variable, stored on a property or written in a closure handed over later is not one: the closure has not run, and the specification that runs it is elsewhere |
 

@@ -5,12 +5,8 @@ declare(strict_types=1);
 namespace Rasuvaeff\Understudy\PhpStan\Internal;
 
 use PhpParser\Node\Expr;
-use PhpParser\Node\Expr\ArrowFunction;
-use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Identifier;
-use PhpParser\Node\Stmt\Expression;
-use PhpParser\Node\Stmt\Return_;
 use PHPStan\Analyser\Scope;
 use PHPStan\Reflection\ExtendedMethodReflection;
 use PHPStan\Reflection\ParameterReflection;
@@ -39,7 +35,7 @@ final readonly class SpecifiedCall
 
     public static function of(Expr $closure, Scope $scope): ?self
     {
-        $call = self::singleCall($closure);
+        $call = ClosureShape::singleCall($closure);
 
         if (!$call instanceof \PhpParser\Node\Expr\MethodCall || !$call->name instanceof Identifier) {
             return null;
@@ -75,31 +71,5 @@ final readonly class SpecifiedCall
             $this->call->getArgs(),
             $this->method->getVariants(),
         );
-    }
-
-    private static function singleCall(Expr $closure): ?MethodCall
-    {
-        $body = match (true) {
-            $closure instanceof ArrowFunction => $closure->expr,
-            $closure instanceof Closure => self::onlyStatement($closure),
-            default => null,
-        };
-
-        return $body instanceof MethodCall ? $body : null;
-    }
-
-    private static function onlyStatement(Closure $closure): ?Expr
-    {
-        if (\count($closure->stmts) !== 1) {
-            return null;
-        }
-
-        $first = $closure->stmts[0];
-
-        return match (true) {
-            $first instanceof Expression => $first->expr,
-            $first instanceof Return_ => $first->expr,
-            default => null,
-        };
     }
 }

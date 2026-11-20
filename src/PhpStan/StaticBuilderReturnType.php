@@ -11,6 +11,7 @@ use PHPStan\Type\DynamicStaticMethodReturnTypeExtension;
 use PHPStan\Type\Type;
 use Rasuvaeff\Understudy\ExpectBuilder;
 use Rasuvaeff\Understudy\PhpStan\Internal\BuilderType;
+use Rasuvaeff\Understudy\PhpStan\Internal\DoubleType;
 use Rasuvaeff\Understudy\PhpStan\Internal\WireShape;
 use Rasuvaeff\Understudy\Understudy;
 use Rasuvaeff\Understudy\WhenBuilder;
@@ -22,7 +23,8 @@ use Rasuvaeff\Understudy\WhenBuilder;
  * users are told to reach for because Pest owns the global `expect()` — an
  * extension that only knew the free functions would be silent exactly for
  * them. And `wire()`, whose shape is readable from the named class's
- * constructor.
+ * constructor, and `for()` with more than one contract, which is a double of
+ * all of them.
  *
  * @internal
  */
@@ -34,7 +36,10 @@ final readonly class StaticBuilderReturnType implements DynamicStaticMethodRetur
         'expect' => ExpectBuilder::class,
     ];
 
-    public function __construct(private WireShape $wireShape) {}
+    public function __construct(
+        private WireShape $wireShape,
+        private DoubleType $doubleType,
+    ) {}
 
     #[\Override]
     public function getClass(): string
@@ -47,7 +52,7 @@ final readonly class StaticBuilderReturnType implements DynamicStaticMethodRetur
     {
         $name = strtolower($methodReflection->getName());
 
-        return $name === 'wire' || isset(self::BUILDERS[$name]);
+        return $name === 'wire' || $name === 'for' || isset(self::BUILDERS[$name]);
     }
 
     #[\Override]
@@ -58,6 +63,10 @@ final readonly class StaticBuilderReturnType implements DynamicStaticMethodRetur
     ): ?Type {
         $name = strtolower($methodReflection->getName());
         $arguments = $methodCall->getArgs();
+
+        if ($name === 'for') {
+            return $this->doubleType->of($arguments);
+        }
 
         if ($name === 'wire') {
             return $this->wireShape->of($arguments, $scope);

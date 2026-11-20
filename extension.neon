@@ -10,6 +10,9 @@ services:
         class: Rasuvaeff\Understudy\PhpStan\Internal\WireShape
 
     -
+        class: Rasuvaeff\Understudy\PhpStan\Internal\DoubleType
+
+    -
         class: Rasuvaeff\Understudy\PhpStan\ArgReturnType
         tags:
             - phpstan.broker.dynamicStaticMethodReturnTypeExtension

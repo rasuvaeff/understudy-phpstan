@@ -7,6 +7,7 @@ namespace Rasuvaeff\Understudy\PhpStan\Rule;
 use PhpParser\Node;
 use PhpParser\Node\Expr\FuncCall;
 use PHPStan\Analyser\Scope;
+use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Rules\Rule;
 use Rasuvaeff\Understudy\PhpStan\Internal\SpecificationCheck;
 use Rasuvaeff\Understudy\PhpStan\Internal\SpecificationExpr;
@@ -18,8 +19,10 @@ use Rasuvaeff\Understudy\PhpStan\Internal\SpecificationExpr;
  *
  * @internal
  */
-final class SpecificationCallRule implements Rule
+final readonly class SpecificationCallRule implements Rule
 {
+    public function __construct(private ReflectionProvider $reflection) {}
+
     #[\Override]
     public function getNodeType(): string
     {
@@ -31,6 +34,6 @@ final class SpecificationCallRule implements Rule
     {
         $verb = SpecificationExpr::verbOf($node);
 
-        return $verb === null ? [] : SpecificationCheck::errors($node, $verb, $scope);
+        return $verb === null ? [] : SpecificationCheck::errors($node, $verb, $scope, $this->reflection);
     }
 }
