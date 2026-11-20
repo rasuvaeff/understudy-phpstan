@@ -121,6 +121,14 @@ $wired['doubles']['clock']->tick();  // Call to an undefined method Clock::tick(
 `array{sut: object, doubles: array<string, object>}`. Динамический class-string
 не трогается по той же причине.
 
+Ключ есть только там, где ядро строит дубль. У параметра из `$overrides` его
+нет — после `wire(Checkout::class, ['clock' => $clock])` обращение
+`$wired['doubles']['clock']` даёт `Offset 'clock' does not exist`, — как нет и
+у variadic-хвоста. Параметр-класс с default'ом может остаться на этом
+default'е, если класс не удваивается, поэтому его ключа может не быть;
+интерфейс с default'ом всё равно удваивается. Если ключи overrides неизвестны,
+любой ключ может отсутствовать.
+
 ### 4. Спецификации, которые не могут работать, сообщаются
 
 У каждой есть рантайм-двойник — движок бросает исключение либо ожидание

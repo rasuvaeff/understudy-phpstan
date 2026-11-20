@@ -235,6 +235,47 @@ final class ExtensionIntegrationTest
     }
 
     /**
+     * A key is in the shape only where the core puts a double: not for a
+     * parameter passed through `$overrides`, not for a variadic tail, and only
+     * possibly for a class parameter with a default, which the core answers
+     * with that default when the class cannot be doubled. Typing every
+     * parameter as a required key let `$wired['doubles']['clock']->now()`
+     * pass analysis and fail on a missing key.
+     *
+     * The control run is what makes the reports the extension's: without it
+     * every key is a plain `object` and none of them is reported as missing.
+     */
+    public function theWireShapeOmitsKeysTheCoreDoesNotDouble(): void
+    {
+        $missing = static fn(array $messages, string $text): int => count(array_filter(
+            $messages,
+            static fn(array $m): bool => ($m['identifier'] ?? null) === 'offsetAccess.notFound'
+                && str_contains($m['message'], $text),
+        ));
+
+        $report = $this->analyse('Wire');
+        $messages = $this->messagesIn($report, 'Wrong.php');
+
+        // A literal override, and a variadic tail: the key does not exist.
+        Assert::same($missing($messages, "Offset 'clock' does not exist on array{books:"), 1);
+        Assert::same($missing($messages, "Offset 'auditors' does not exist"), 1);
+        // Overrides whose keys are unknown, and a final class with a default:
+        // the key may be missing.
+        Assert::same($missing($messages, "Offset 'books' might not exist"), 1);
+        Assert::same($missing($messages, "Offset 'fallback' might not exist"), 1);
+        // What stays doubled stays typed: the rest of an override, an
+        // interface with a default, the parameters before a variadic tail —
+        // and an overridden union is no refusal, because `Wire` takes the
+        // override before it reads the type.
+        Assert::same($this->countIn($report, 'Right.php'), 0);
+
+        $control = $this->messagesIn($this->analyse('Wire', 'phpstan-without-extension.neon'), 'Wrong.php');
+
+        Assert::same($missing($control, 'Offset'), 0);
+        Assert::true(\count($control) > 0);
+    }
+
+    /**
      * @return array<string, list<array{message: string, line: int|null, identifier?: string|null}>>
      */
     private function analyse(string $fixture, string $config = 'phpstan.neon'): array

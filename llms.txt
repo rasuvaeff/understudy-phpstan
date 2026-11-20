@@ -54,7 +54,10 @@ project never names one.
   intersection parameter is one double and keeps the intersection; a union
   naming two object types makes the core refuse the class (`CannotWire`), so
   no shape is produced for that call at all. A dynamic class-string is left
-  alone.
+  alone. A key exists only where the core builds a double: none for a
+  parameter passed through `$overrides` or for a variadic tail; a class
+  parameter with a default might not exist (it may keep its default), and
+  overrides with unknown keys make every key optional.
 - Both spellings are understood: the free functions a test file imports
   (`when()`, `expect()`, `expectSequence()`, `verify()`) and the `Understudy::`
   static form Pest users reach for, plus the readers that have no function

@@ -5,8 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 1.0.2 — 2026-11-20
 
+- **Fixed.** The `wire()` shape no longer types keys the core never puts in
+  `doubles` (#50). A parameter passed through `$overrides` has no key (its
+  literal keys are read from the argument's type), overrides whose keys are not
+  known make every key optional, a variadic tail has no key, and a class
+  parameter with a default is optional, because the core keeps the default
+  when the class cannot be doubled. `$wired['doubles']['clock']` after
+  `wire(Foo::class, ['clock' => $x])` is now `offsetAccess.notFound` instead of
+  passing analysis and failing at runtime. An overridden parameter whose type
+  is a union of two classes no longer drops the whole shape: the core takes the
+  override before it reads the type.
 - deps: `vimeo/psalm` `^6.16` → `^7.2`. Psalm 7 cannot resolve the two linked
   templates of `CollectedDataNode::get()` (it substitutes `TCollector` into the
   `Collector<Node, TValue>` constraint), so `MatcherLeakRule` reads its
