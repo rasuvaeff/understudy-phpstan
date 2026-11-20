@@ -112,6 +112,7 @@ final class MatcherKindTest
         yield 'count into a nullable int' => ['count', TypeCombinator::addNull(new IntegerType()), true];
         yield 'which into string' => ['which', new StringType(), true];
         yield 'which into an array' => ['which', new ArrayType(new IntegerType(), new StringType()), true];
+        yield 'the shape name is case-insensitive' => ['Count', new StringType(), true];
     }
 
     #[DataProvider('instanceProvider')]
