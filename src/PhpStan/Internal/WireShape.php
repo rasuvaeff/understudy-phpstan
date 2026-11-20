@@ -27,6 +27,13 @@ use PHPStan\Type\TypeCombinator;
  * A dynamic class-string is left alone: the core's declaration is then the
  * honest answer, and guessing would be worse than saying less.
  *
+ * A key is in the shape only where the core puts one in `doubles`, which
+ * `Wire` decides per parameter: a parameter named in `$overrides` takes the
+ * given value and has no double, a variadic tail is never doubled, and a
+ * parameter whose type cannot be doubled keeps its own default instead. The
+ * first is read from the overrides argument; the other two from the
+ * constructor.
+ *
  * @internal
  */
 final readonly class WireShape
@@ -56,6 +63,7 @@ final readonly class WireShape
             return null;
         }
 
+        $overrides = $this->overrides($arguments, $scope);
         $doubles = ConstantArrayTypeBuilder::createEmpty();
         $found = false;
 
@@ -67,6 +75,20 @@ final readonly class WireShape
         $parameters = $variants[0]->getParameters();
 
         foreach ($parameters as $parameter) {
+            $name = $parameter->getName();
+
+            if (isset($overrides['definite'][$name]) || $parameter->isVariadic()) {
+                // The test handed the value in, and `Wire` takes it before
+                // looking at the type: no double, and no refusal of a union
+                // either. A variadic tail is never doubled — it is optional
+                // by definition, and inventing entries for it would invent
+                // collaborators. Either way there is never a key, and that is
+                // worth an exact shape even when nothing else is doubled.
+                $found = true;
+
+                continue;
+            }
+
             // `?Contract` is the same double — the core builds one rather than
             // passing null wherever it can — so null is dropped before the
             // type is read. Without this the union answered no class name, no
@@ -89,7 +111,12 @@ final readonly class WireShape
                 continue;
             }
 
-            $doubles->setOffsetValueType(new ConstantStringType($parameter->getName()), $contract);
+            $doubles->setOffsetValueType(
+                new ConstantStringType($name),
+                $contract,
+                optional: $overrides['open'] || isset($overrides['possible'][$name])
+                    || $parameter->isOptional() && !$this->isInterface($contract),
+            );
             $found = true;
         }
 
@@ -102,6 +129,99 @@ final readonly class WireShape
         $shape->setOffsetValueType(new ConstantStringType('doubles'), $doubles->getArray());
 
         return $shape->getArray();
+    }
+
+    /**
+     * Whether every contract the parameter names is an interface.
+     *
+     * A class parameter with a default is answered by that default whenever
+     * the class cannot be doubled — final unless `bypassFinals()` was called,
+     * an enum, an internal class — and which of those holds is a runtime fact,
+     * so its key may be missing. An interface is doubled whenever it is
+     * reached; the residual is one that extends `Throwable` or declares a
+     * constructor, which the core refuses too.
+     */
+    private function isInterface(Type $contract): bool
+    {
+        foreach ($contract->getObjectClassNames() as $className) {
+            if (!$this->reflectionProvider->hasClass($className)
+                || !$this->reflectionProvider->getClass($className)->isInterface()
+            ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * The constructor parameters the overrides argument names.
+     *
+     * `definite` keys are always passed, so the core never doubles them;
+     * `possible` keys may be; `open` means any key may be, because the
+     * argument is not an array whose keys are known.
+     *
+     * @param array<Arg> $arguments
+     *
+     * @return array{definite: array<string, true>, possible: array<string, true>, open: bool}
+     */
+    private function overrides(array $arguments, Scope $scope): array
+    {
+        $open = ['definite' => [], 'possible' => [], 'open' => true];
+        $argument = null;
+
+        foreach (array_values($arguments) as $position => $candidate) {
+            if ($candidate->unpack) {
+                return $open;
+            }
+
+            $name = $candidate->name?->toString();
+
+            if ($name === 'overrides' || $name === null && $position === 1) {
+                $argument = $candidate;
+            }
+        }
+
+        if (!$argument instanceof Arg) {
+            return ['definite' => [], 'possible' => [], 'open' => false];
+        }
+
+        $type = $scope->getType($argument->value);
+
+        if (!$type->isConstantArray()->yes()) {
+            return $open;
+        }
+
+        /** @var array<string, true>|null $definite */
+        $definite = null;
+        $possible = [];
+
+        foreach ($type->getConstantArrays() as $array) {
+            $always = [];
+
+            foreach ($array->getKeyTypes() as $index => $keyType) {
+                $key = (string) $keyType->getValue();
+                $possible[$key] = true;
+
+                if (!$array->isOptionalKey($index)) {
+                    $always[$key] = true;
+                }
+            }
+
+            if ($definite === null) {
+                $definite = $always;
+
+                continue;
+            }
+
+            foreach (array_keys($definite) as $key) {
+                if (!isset($always[$key])) {
+                    unset($definite[$key]);
+                }
+            }
+        }
+
+        return ['definite' => $definite ?? [], 'possible' => $possible, 'open' => false];
     }
 
     /**

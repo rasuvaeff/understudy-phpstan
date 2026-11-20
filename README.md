@@ -119,6 +119,14 @@ because picking one of the two would be a guess — so no shape describes the
 call at all and the core's own `array{sut: object, doubles: array<string,
 object>}` stands. A dynamic class-string is left alone for the same reason.
 
+A key exists only where the core builds a double. A parameter passed through
+`$overrides` has none — `wire(Checkout::class, ['clock' => $clock])` makes
+`$wired['doubles']['clock']` an `Offset 'clock' does not exist` — and neither
+does a variadic tail. A class parameter with a default may keep that default
+when the class cannot be doubled, so its key might not exist; an interface
+with a default is still doubled. Overrides whose keys are not known make every
+key possibly missing.
+
 ### 4. Specifications that cannot work are reported
 
 Each of these has a runtime counterpart — the engine throws, or the
