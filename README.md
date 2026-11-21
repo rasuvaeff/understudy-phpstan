@@ -15,7 +15,7 @@ PHPStan extension for [understudy](https://github.com/rasuvaeff/understudy).
 
 ## Requirements
 
-- PHP 8.3 - 8.5
+- PHP 8.3 - 8.6
 - `phpstan/phpstan` ^2.2.2
 - `nikic/php-parser` ^5.0
 - `rasuvaeff/understudy` ^1.0

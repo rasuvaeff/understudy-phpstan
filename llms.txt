@@ -15,7 +15,7 @@ includes:
     - vendor/rasuvaeff/understudy-phpstan/extension.neon
 ```
 
-Namespace: `Rasuvaeff\Understudy\PhpStan`. Requires PHP 8.3 - 8.5,
+Namespace: `Rasuvaeff\Understudy\PhpStan`. Requires PHP 8.3 - 8.6,
 `phpstan/phpstan ^2.2.2` and `rasuvaeff/understudy ^1.0`.
 
 ## API

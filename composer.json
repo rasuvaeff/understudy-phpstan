@@ -24,7 +24,7 @@
         "source": "https://github.com/rasuvaeff/understudy-phpstan"
     },
     "require": {
-        "php": "8.3 - 8.5",
+        "php": "8.3 - 8.6",
         "nikic/php-parser": "^5.0",
         "phpstan/phpstan": "^2.2.2",
         "rasuvaeff/understudy": "^1.0"
