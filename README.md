@@ -153,21 +153,24 @@ green suite hides.
 | `understudy.returns` | `returns()` on a method declared `void`, where no value is ever observed |
 | `understudy.matcherLeak` | A matcher written outside a specification and outside a closure, where it reaches the code as a value. A matcher hoisted into a variable, stored on a property or written in a closure handed over later is not one: the closure has not run, and the specification that runs it is elsewhere |
 
-One more identifier is a suggestion rather than a mistake — the
+One more identifier is an opt-in suggestion rather than a mistake — the
 specification works as written:
 
 | Identifier | Reported when |
 |---|---|
 | `understudy.rest` | Three or more `Arg::any()` at the end of a specified call, which `Arg::rest()` says in one word. Only where the two are the same specification — never for a method with a variadic parameter (the `any()` run pins the tail's length, `rest()` does not), never with a named or unpacked argument, and never when the call spells fewer arguments than the method requires or more than it declares |
 
-PHPStan has no severity below an error, so `understudy.rest` fails a build
-like any other report until you either take the suggestion or ignore it:
+PHPStan has no severity below an error, so a suggestion reported as one would
+turn a green run red. It is therefore off by default; turn it on with:
 
 ```neon
 parameters:
-    ignoreErrors:
-        - identifier: understudy.rest
+    understudy:
+        suggestRest: true
 ```
+
+Once on, it is reported like any other error; a single line can still be
+silenced with `ignoreErrors` and `identifier: understudy.rest`.
 
 The rules are silent whenever they are not sure. A refined parameter type —
 `non-empty-string`, an int range — answers "maybe" to its plain kind, and a

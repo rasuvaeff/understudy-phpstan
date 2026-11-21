@@ -83,9 +83,9 @@ project never names one.
 - `understudy.rest` — a suggestion, not a mistake: three or more `Arg::any()`
   at the end of a specified call can be one `Arg::rest()`. Only where
   equivalent: never for a variadic method, a named or unpacked argument, or a
-  call spelling fewer arguments than required / more than declared. PHPStan
-  has no info severity, so it fails a build until taken or ignored
-  (`ignoreErrors: - identifier: understudy.rest`).
+  call spelling fewer arguments than required / more than declared. OFF by
+  default (PHPStan has no info severity); enable with
+  `parameters: understudy: suggestRest: true`.
 - `understudy.matcherLeak` — a matcher written outside a specification AND
   outside any closure, where it reaches the code as a value. A matcher hoisted
   into a variable, stored on a property, or written inside a closure handed to

@@ -62,15 +62,7 @@ final class SpecificationCheck
         ReflectionProvider $reflection,
     ): array {
         $arguments = array_values($call->getArgs());
-
-        // Every closure argument, not the first one: `verifySequence()` takes
-        // a whole protocol, and a mistake in its third step is the same
-        // mistake as in its first. The non-closure arguments of `verify()`
-        // are the cardinality, checked below.
-        $closures = array_values(array_filter(
-            array_map(static fn(Arg $argument): Expr => $argument->value, $arguments),
-            static fn(Expr $value): bool => $value instanceof Closure || $value instanceof ArrowFunction,
-        ));
+        $closures = self::closuresOf($arguments);
 
         if ($closures === []) {
             return [];
@@ -104,8 +96,7 @@ final class SpecificationCheck
     }
 
     /**
-     * A matcher whose kind no argument of that parameter could ever have,
-     * and a tail of `Arg::any()` that `Arg::rest()` would say in one word.
+     * A matcher whose kind no argument of that parameter could ever have.
      *
      * @return list<IdentifierRuleError>
      */
@@ -118,7 +109,7 @@ final class SpecificationCheck
         }
 
         $parameters = $specified->parameters();
-        $errors = self::restErrors($specified, $parameters);
+        $errors = [];
 
         foreach (array_values($specified->call->getArgs()) as $position => $argument) {
             $parameter = $parameters[$position] ?? null;
@@ -142,10 +133,54 @@ final class SpecificationCheck
     }
 
     /**
+     * A tail of `Arg::any()` that `Arg::rest()` would say in one word, in
+     * every closure of the specification.
+     *
+     * Apart from {@see errors()} because it is a suggestion rather than a
+     * mistake, and opt-in for that reason: `Rule\RestSuggestionRule` is
+     * registered only under `understudy.suggestRest: true`.
+     *
+     * @return list<IdentifierRuleError>
+     */
+    public static function restSuggestions(FuncCall|StaticCall $call, Scope $scope): array
+    {
+        $errors = [];
+
+        foreach (self::closuresOf(array_values($call->getArgs())) as $closure) {
+            $specified = SpecifiedCall::of($closure, $scope);
+
+            if ($specified instanceof SpecifiedCall) {
+                foreach (self::restErrors($specified, $specified->parameters()) as $error) {
+                    $errors[] = $error;
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Every closure argument, not the first one: `verifySequence()` takes a
+     * whole protocol, and a mistake in its third step is the same mistake as
+     * in its first. The non-closure arguments of `verify()` are the
+     * cardinality.
+     *
+     * @param list<Arg> $arguments
+     *
+     * @return list<Expr>
+     */
+    private static function closuresOf(array $arguments): array
+    {
+        return array_values(array_filter(
+            array_map(static fn(Arg $argument): Expr => $argument->value, $arguments),
+            static fn(Expr $value): bool => $value instanceof Closure || $value instanceof ArrowFunction,
+        ));
+    }
+
+    /**
      * The suggestion, on the first `Arg::any()` of the run. Its own
      * identifier and no "cannot work" preamble, because nothing here is
-     * broken: `ignoreErrors` with `identifier: understudy.rest` turns it off
-     * without touching `understudy.matcher`.
+     * broken.
      *
      * @param list<ParameterReflection> $parameters
      *
