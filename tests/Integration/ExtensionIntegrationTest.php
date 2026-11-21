@@ -254,6 +254,16 @@ final class ExtensionIntegrationTest
     }
 
     /**
+     * Opt-in: PHPStan has no severity below an error, so without
+     * `understudy.suggestRest: true` the same files report nothing — a minor
+     * upgrade must not turn a green run red.
+     */
+    public function theSuggestionIsOffByDefault(): void
+    {
+        Assert::same($this->analyse('Rest', 'phpstan-default.neon'), []);
+    }
+
+    /**
      * Ignoring the identifier turns the suggestion off and nothing else.
      */
     public function theSuggestionIsIgnoredByItsIdentifier(): void

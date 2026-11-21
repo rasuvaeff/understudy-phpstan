@@ -7,16 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 1.2.0 — 2026-11-21
 
-- **Added.** `understudy.rest`: three or more `Arg::any()` at the end of a
-  specified call can be one `Arg::rest()` (#56). A suggestion under its own
+- **Added.** `understudy.rest`, opt-in: three or more `Arg::any()` at the end
+  of a specified call can be one `Arg::rest()` (#56). A suggestion under its own
   identifier, reported on the first `Arg::any()` of the run, and only where
   the two are the same specification: the engine records a non-variadic
   method's arguments by name, so both accept exactly the same calls. Never
   for a method with a variadic parameter, a named or unpacked argument, or a
   call spelling fewer arguments than required or more than declared.
-  PHPStan has no severity below an error, so a project with such tails sees
-  new reports until it takes the suggestion or adds
-  `ignoreErrors: - identifier: understudy.rest`. The same rule and wording as
+  PHPStan has no severity below an error, so the rule is off by default and
+  an upgrade reports nothing new; enable it with
+  `parameters: understudy: suggestRest: true` (a `parametersSchema` entry,
+  the rule registered through `conditionalTags`). The same rule and wording as
   `UnderstudyRestSuggestion` in understudy-psalm; the trailing-run logic is a
   shared `Internal\RestTail`, guarded by the fingerprint test.
 - **Added.** `Arg::whichProperty()` (understudy 1.2.0) against a parameter

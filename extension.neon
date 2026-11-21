@@ -1,3 +1,18 @@
+parametersSchema:
+    understudy: structure([
+        suggestRest: bool()
+    ])
+
+parameters:
+    understudy:
+        # `understudy.rest`, a suggestion rather than a mistake: off unless
+        # a project asks for it, because PHPStan reports it as an error.
+        suggestRest: false
+
+conditionalTags:
+    Rasuvaeff\Understudy\PhpStan\Rule\RestSuggestionRule:
+        phpstan.rules.rule: %understudy.suggestRest%
+
 rules:
     - Rasuvaeff\Understudy\PhpStan\Rule\SpecificationCallRule
     - Rasuvaeff\Understudy\PhpStan\Rule\SpecificationStaticCallRule
@@ -6,6 +21,9 @@ rules:
     - Rasuvaeff\Understudy\PhpStan\Rule\MatcherLeakRule
 
 services:
+    -
+        class: Rasuvaeff\Understudy\PhpStan\Rule\RestSuggestionRule
+
     -
         class: Rasuvaeff\Understudy\PhpStan\Internal\WireShape
 
