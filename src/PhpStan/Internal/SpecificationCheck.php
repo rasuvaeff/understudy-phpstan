@@ -15,6 +15,7 @@ use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PHPStan\Analyser\Scope;
+use PHPStan\Reflection\ParameterReflection;
 use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\RuleErrorBuilder;
@@ -44,6 +45,8 @@ final class SpecificationCheck
     public const string CARDINALITY_IDENTIFIER = 'understudy.cardinality';
 
     public const string MATCHER_IDENTIFIER = 'understudy.matcher';
+
+    public const string REST_IDENTIFIER = 'understudy.rest';
 
     private function __construct() {}
 
@@ -101,7 +104,8 @@ final class SpecificationCheck
     }
 
     /**
-     * A matcher whose kind no argument of that parameter could ever have.
+     * A matcher whose kind no argument of that parameter could ever have,
+     * and a tail of `Arg::any()` that `Arg::rest()` would say in one word.
      *
      * @return list<IdentifierRuleError>
      */
@@ -114,7 +118,7 @@ final class SpecificationCheck
         }
 
         $parameters = $specified->parameters();
-        $errors = [];
+        $errors = self::restErrors($specified, $parameters);
 
         foreach (array_values($specified->call->getArgs()) as $position => $argument) {
             $parameter = $parameters[$position] ?? null;
@@ -135,6 +139,47 @@ final class SpecificationCheck
         }
 
         return $errors;
+    }
+
+    /**
+     * The suggestion, on the first `Arg::any()` of the run. Its own
+     * identifier and no "cannot work" preamble, because nothing here is
+     * broken: `ignoreErrors` with `identifier: understudy.rest` turns it off
+     * without touching `understudy.matcher`.
+     *
+     * @param list<ParameterReflection> $parameters
+     *
+     * @return list<IdentifierRuleError>
+     */
+    private static function restErrors(SpecifiedCall $specified, array $parameters): array
+    {
+        $required = 0;
+
+        foreach ($parameters as $parameter) {
+            $required += $parameter->isOptional() ? 0 : 1;
+        }
+
+        $arguments = array_values($specified->call->getArgs());
+        $tail = RestTail::of(
+            $arguments,
+            static fn(Expr $value): ?string => MatcherName::of($value),
+            $required,
+            count($parameters),
+            $specified->isVariadic(),
+        );
+
+        if ($tail === null) {
+            return [];
+        }
+
+        [$start, $length] = $tail;
+
+        return [
+            RuleErrorBuilder::message(RestTail::message($length))
+                ->identifier(self::REST_IDENTIFIER)
+                ->line($arguments[$start]->value->getStartLine())
+                ->build(),
+        ];
     }
 
     private static function matcherProblem(

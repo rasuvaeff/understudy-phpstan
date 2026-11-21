@@ -119,12 +119,14 @@ final class MatcherKind
      * `containing` asks `is_array()`. `count` takes an array or a
      * `Countable`, and every object is a maybe: whether a class implements
      * `Countable` is not asked, the same line the Psalm plugin draws.
-     * `which` reads a getter, so it needs an object.
+     * `which` reads a getter and `whichProperty` a public property, so both
+     * need an object.
      */
     private const array SHAPES = [
         'containing' => 'array',
         'count' => 'array|Countable',
         'which' => 'object',
+        'whichproperty' => 'object',
     ];
 
     private static function rejectsShape(string $matcher, Type $member): bool
