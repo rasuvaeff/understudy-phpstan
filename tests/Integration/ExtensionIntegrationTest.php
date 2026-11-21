@@ -224,6 +224,43 @@ final class ExtensionIntegrationTest
         Assert::true(\in_array('method.notFound', $control, strict: true));
     }
 
+    /**
+     * A trailing run of `Arg::any()` is a suggestion under its own
+     * identifier, on the first `Arg::any()` of the run — under every verb,
+     * through a field, on the second contract of a double and under an
+     * aliased import.
+     *
+     * `Rewritten.php` is `Suggested.php` with every suggestion taken, and
+     * must be silent: advice that turns a green run red is worse than none.
+     * `Silent.php` holds the tails `rest()` would not say the same way.
+     */
+    public function aTailOfAnyIsSuggestedAsRest(): void
+    {
+        $report = $this->analyse('Rest');
+        $suggested = $this->messagesIn($report, 'Suggested.php');
+
+        Assert::same($this->identifiersIn($report, 'Suggested.php'), array_fill(0, 8, 'understudy.rest'));
+        Assert::same(
+            $suggested[1]['message'],
+            'The last 3 arguments are all `Arg::any()` and can be one `Arg::rest()`. '
+            . 'The method has no variadic parameter, so `rest()` matches exactly the same calls '
+            . 'and says outright that the arguments from here on do not matter.',
+        );
+        Assert::same($suggested[0]['message'], str_replace('last 3', 'last 4', $suggested[1]['message']));
+        Assert::same($this->identifiersIn($report, 'Aliased.php'), ['understudy.rest']);
+        Assert::same($this->countIn($report, 'Rewritten.php'), 0);
+        Assert::same($this->countIn($report, 'Silent.php'), 0);
+        Assert::same($this->countIn($report, 'Contracts.php'), 0);
+    }
+
+    /**
+     * Ignoring the identifier turns the suggestion off and nothing else.
+     */
+    public function theSuggestionIsIgnoredByItsIdentifier(): void
+    {
+        Assert::same($this->analyse('Rest', 'phpstan-ignored.neon'), []);
+    }
+
     public function theWireShapeIsReadFromTheConstructor(): void
     {
         $report = $this->analyse('Wire');

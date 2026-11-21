@@ -98,6 +98,10 @@ final class MatcherKindTest
         yield 'which into a callable' => ['which', new CallableType(), false];
         yield 'which into an iterable' => ['which', new IterableType(new MixedType(), new MixedType()), false];
         yield 'which into a nullable object' => ['which', TypeCombinator::addNull(new ObjectWithoutClassType()), false];
+        yield 'whichProperty into an object' => ['whichProperty', new ObjectType(\ArrayObject::class), false];
+        yield 'whichProperty into a bare object' => ['whichProperty', new ObjectWithoutClassType(), false];
+        yield 'whichProperty into a callable' => ['whichProperty', new CallableType(), false];
+        yield 'whichProperty into mixed' => ['whichProperty', new MixedType(), false];
 
         // The pairings no argument can satisfy.
         yield 'int into string' => ['int', new StringType(), true];
@@ -112,6 +116,8 @@ final class MatcherKindTest
         yield 'count into a nullable int' => ['count', TypeCombinator::addNull(new IntegerType()), true];
         yield 'which into string' => ['which', new StringType(), true];
         yield 'which into an array' => ['which', new ArrayType(new IntegerType(), new StringType()), true];
+        yield 'whichProperty into string' => ['whichProperty', new StringType(), true];
+        yield 'whichProperty into a nullable int' => ['whichProperty', TypeCombinator::addNull(new IntegerType()), true];
         yield 'the shape name is case-insensitive' => ['Count', new StringType(), true];
     }
 

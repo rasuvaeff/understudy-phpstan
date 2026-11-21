@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.2.0 — 2026-11-21
+
+- **Added.** `understudy.rest`: three or more `Arg::any()` at the end of a
+  specified call can be one `Arg::rest()` (#56). A suggestion under its own
+  identifier, reported on the first `Arg::any()` of the run, and only where
+  the two are the same specification: the engine records a non-variadic
+  method's arguments by name, so both accept exactly the same calls. Never
+  for a method with a variadic parameter, a named or unpacked argument, or a
+  call spelling fewer arguments than required or more than declared.
+  PHPStan has no severity below an error, so a project with such tails sees
+  new reports until it takes the suggestion or adds
+  `ignoreErrors: - identifier: understudy.rest`. The same rule and wording as
+  `UnderstudyRestSuggestion` in understudy-psalm; the trailing-run logic is a
+  shared `Internal\RestTail`, guarded by the fingerprint test.
+- **Added.** `Arg::whichProperty()` (understudy 1.2.0) against a parameter
+  that holds no object is reported under `understudy.matcher`, like
+  `which()` (#52). The rest of #52 shipped in 1.1.0; its `returns()` half is
+  PHPStan's own `argument.type`, pinned in `Fixtures/Returns`.
+
 ## 1.1.0 — 2026-11-20
 
 - **Added.** `Understudy::for(A::class, B::class)` is typed `A&B` when every

@@ -59,6 +59,11 @@ final readonly class SpecifiedCall
         return $this->variant()->getParameters();
     }
 
+    public function isVariadic(): bool
+    {
+        return $this->variant()->isVariadic();
+    }
+
     public function returnType(): Type
     {
         return $this->variant()->getReturnType();

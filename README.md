@@ -149,9 +149,25 @@ green suite hides.
 |---|---|
 | `understudy.closure` | The closure specifies nothing, makes more than one call, or calls a static method a double cannot intercept |
 | `understudy.cardinality` | `times(5, 2)`, a negative bound, `verify(…, never: true, times: 3)`, `times` beside a `minimum` |
-| `understudy.matcher` | A matcher whose kind the parameter can never accept: `Arg::int()` where a `string` is declared; `containing()` against anything that cannot be an array; `count()` against a parameter that holds neither an array nor an object; `which()` against one that holds no object; `instanceOf(Foo::class)` (written out) and a `Captor<Foo>`'s `capture()` against a parameter that holds no object, or only objects of a class unrelated to `Foo`. An interface on either side is never judged — not even against a final class, because a double of a final class can implement it |
+| `understudy.matcher` | A matcher whose kind the parameter can never accept: `Arg::int()` where a `string` is declared; `containing()` against anything that cannot be an array; `count()` against a parameter that holds neither an array nor an object; `which()` and `whichProperty()` against one that holds no object; `instanceOf(Foo::class)` (written out) and a `Captor<Foo>`'s `capture()` against a parameter that holds no object, or only objects of a class unrelated to `Foo`. An interface on either side is never judged — not even against a final class, because a double of a final class can implement it |
 | `understudy.returns` | `returns()` on a method declared `void`, where no value is ever observed |
 | `understudy.matcherLeak` | A matcher written outside a specification and outside a closure, where it reaches the code as a value. A matcher hoisted into a variable, stored on a property or written in a closure handed over later is not one: the closure has not run, and the specification that runs it is elsewhere |
+
+One more identifier is a suggestion rather than a mistake — the
+specification works as written:
+
+| Identifier | Reported when |
+|---|---|
+| `understudy.rest` | Three or more `Arg::any()` at the end of a specified call, which `Arg::rest()` says in one word. Only where the two are the same specification — never for a method with a variadic parameter (the `any()` run pins the tail's length, `rest()` does not), never with a named or unpacked argument, and never when the call spells fewer arguments than the method requires or more than it declares |
+
+PHPStan has no severity below an error, so `understudy.rest` fails a build
+like any other report until you either take the suggestion or ignore it:
+
+```neon
+parameters:
+    ignoreErrors:
+        - identifier: understudy.rest
+```
 
 The rules are silent whenever they are not sure. A refined parameter type —
 `non-empty-string`, an int range — answers "maybe" to its plain kind, and a
